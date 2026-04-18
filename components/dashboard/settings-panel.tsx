@@ -4,30 +4,30 @@ type SettingsPanelProps = {
   currentDataMode: string
 }
 
-const placeholderSettingsSections = [
+const plannedSettingsSections = [
   {
     title: "Notifications",
-    status: "Placeholder",
+    status: "Planned",
     description:
-      "Notification delivery is not wired up yet, but this area is reserved for execution alerts, strategy status changes, and operational updates.",
+      "Notification delivery is planned for execution alerts, strategy status changes, and operational updates once the backend watcher is introduced.",
     bullets: [
       "Email, push, and in-app notification preferences are not yet implemented.",
-      "Delivery rules for successful, failed, or pending executions will be configured here later.",
+      "Delivery rules for successful, failed, or pending executions will be added when alerts become a supported feature.",
     ],
   },
   {
     title: "Execution Preferences",
-    status: "Placeholder",
+    status: "Planned",
     description:
-      "Execution-level preferences will be added here when backend automation and live wallet execution are available.",
+      "Execution-level preferences will move here once backend automation and live wallet execution are part of the product.",
     bullets: [
       "Default slippage, confirmation behavior, and retry controls are not yet configurable here.",
-      "These controls are currently represented only inside the strategy form.",
+      "A lightweight version of these controls currently lives inside the strategy form.",
     ],
   },
   {
     title: "Security",
-    status: "Placeholder",
+    status: "Planned",
     description:
       "Security settings will expand as authentication, wallet permissions, and protected actions are introduced across the product.",
     bullets: [
@@ -68,11 +68,12 @@ export default function SettingsPanel({ currentDataMode }: SettingsPanelProps) {
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
           <p className="text-sm text-gray-400">Current Workspace State</p>
           <p className="mt-3 text-2xl font-semibold text-white">
-            Dashboard Ready
+            Dashboard Operational
           </p>
           <p className="mt-3 text-sm leading-6 text-gray-400">
             Existing features remain active: strategy form, management actions,
-            execution history, and optimistic dashboard updates.
+            execution history, and wallet-aware dashboard updates. Live automated
+            trade execution is still intentionally out of scope for this release.
           </p>
         </div>
       </div>
@@ -80,7 +81,7 @@ export default function SettingsPanel({ currentDataMode }: SettingsPanelProps) {
       <WalletStatusSection />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {placeholderSettingsSections.map((section) => (
+        {plannedSettingsSections.map((section) => (
           <div
             key={section.title}
             className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6"

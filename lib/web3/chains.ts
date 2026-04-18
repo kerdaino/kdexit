@@ -33,3 +33,9 @@ export const kdexitWalletChains = [primaryKdexitChain.chain] as const
 export function getSupportedChainLabels() {
   return kdexitChainRegistry.map((entry) => entry.label)
 }
+
+export function getStrategyChainEntryByLabel(label: string) {
+  return (
+    kdexitChainRegistry.find((entry) => entry.label === label) ?? primaryKdexitChain
+  )
+}

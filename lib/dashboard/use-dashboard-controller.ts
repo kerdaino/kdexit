@@ -11,7 +11,7 @@ import {
   pauseDashboardStrategy,
   resumeDashboardStrategy,
   updateDashboardStrategy,
-} from "@/lib/dashboard/repository"
+} from "@/lib/dashboard/mutation-gateway"
 import {
   countStrategiesByStatus,
   formatTimestamp,

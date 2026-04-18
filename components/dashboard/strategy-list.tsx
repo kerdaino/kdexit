@@ -16,6 +16,14 @@ type StrategyListProps = {
 
 type FilterStatus = "all" | "active" | "paused"
 
+function formatTokenAddress(address: string) {
+  if (!address) {
+    return "Not set"
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
+
 export default function StrategyList({
   strategies,
   pendingStrategyActionById = {},
@@ -149,14 +157,19 @@ export default function StrategyList({
                       {strategy.tokenName} ({strategy.tokenSymbol})
                     </h3>
                     <p className="mt-1 text-sm leading-6 text-gray-400">
-                      Chain: {strategy.chain} • Sell: {strategy.sellPercentage}%
+                      Chain: {strategy.chain} (ID {strategy.chainId}) • Sell:{" "}
+                      {strategy.sellPercentage}%
                     </p>
                     <p className="mt-1 text-sm leading-6 text-gray-400">
                       TP: {strategy.takeProfitPrice ?? "-"} • SL:{" "}
                       {strategy.stopLossPrice ?? "-"}
                     </p>
+                    <p className="mt-1 text-sm leading-6 text-gray-400">
+                      Token: {formatTokenAddress(strategy.tokenAddress)} • Trigger:{" "}
+                      {strategy.triggerEnabled ? "Enabled" : "Disabled"}
+                    </p>
                     <p className="mt-1 text-xs text-gray-500">
-                      Slippage: {strategy.slippage}%
+                      Slippage: {strategy.slippage}%{strategy.notes ? ` • ${strategy.notes}` : ""}
                     </p>
                   </div>
 

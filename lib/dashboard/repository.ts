@@ -13,7 +13,8 @@ import {
   saveDashboardExecutions,
   saveDashboardStrategies,
 } from "@/lib/dashboard/storage"
-import { initialExecutions, initialStrategies } from "@/lib/mocks/dashboard"
+import { normalizeStrategy } from "@/lib/dashboard/utils"
+import { getStrategyChainEntryByLabel } from "@/lib/web3/chains"
 import type {
   ExecutionInsert,
   ExecutionRecord,
@@ -31,15 +32,21 @@ type DashboardExecutionInput = Omit<Execution, "id" | "executedAt"> & {
 }
 
 function toStrategy(record: StrategyRecord): Strategy {
+  const chainEntry = getStrategyChainEntryByLabel(record.chain)
+
   return {
     id: record.id,
     tokenName: record.token_name,
     tokenSymbol: record.token_symbol,
+    tokenAddress: "",
     chain: record.chain,
+    chainId: chainEntry.chain.id,
     sellPercentage: record.sell_percentage,
     takeProfitPrice: record.take_profit_price ?? undefined,
     stopLossPrice: record.stop_loss_price ?? undefined,
+    triggerEnabled: record.status === "active",
     slippage: record.slippage,
+    notes: undefined,
     status: record.status,
     createdAt: record.created_at,
   }
@@ -140,13 +147,13 @@ export async function listDashboardStrategies() {
 
     if (result.error) {
       console.error("Failed to load strategies from repository:", result.error)
-      return initialStrategies
+      return []
     }
 
     return result.data.map(toStrategy)
   } catch (error) {
     console.error("Failed to load strategies:", error)
-    return initialStrategies
+    return []
   }
 }
 
@@ -161,13 +168,13 @@ export async function listDashboardExecutions() {
 
     if (result.error) {
       console.error("Failed to load executions from repository:", result.error)
-      return initialExecutions
+      return []
     }
 
     return result.data.map(toExecution)
   } catch (error) {
     console.error("Failed to load executions:", error)
-    return initialExecutions
+    return []
   }
 }
 
@@ -176,9 +183,9 @@ export async function createDashboardStrategy(strategy: Strategy) {
 
   if (result.isPlaceholder) {
     const { strategies } = loadDashboardData()
-    const nextStrategies = [strategy, ...strategies]
+    const nextStrategies = [normalizeStrategy(strategy), ...strategies]
     saveDashboardStrategies(nextStrategies)
-    return strategy
+    return normalizeStrategy(strategy)
   }
 
   if (result.error || !result.data) {
@@ -203,10 +210,10 @@ export async function updateDashboardStrategy(strategy: Strategy) {
   if (result.isPlaceholder) {
     const { strategies } = loadDashboardData()
     const nextStrategies = strategies.map((entry) =>
-      entry.id === strategy.id ? strategy : entry
+      entry.id === strategy.id ? normalizeStrategy(strategy) : entry
     )
     saveDashboardStrategies(nextStrategies)
-    return strategy
+    return normalizeStrategy(strategy)
   }
 
   if (result.error || !result.data) {

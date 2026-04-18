@@ -13,11 +13,15 @@ export type Strategy = {
   id: string
   tokenName: string
   tokenSymbol: string
+  tokenAddress: string
   chain: string
+  chainId: number
   sellPercentage: number
   takeProfitPrice?: number
   stopLossPrice?: number
+  triggerEnabled: boolean
   slippage: number
+  notes?: string
   status: StrategyStatus
   createdAt: string
 }

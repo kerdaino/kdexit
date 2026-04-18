@@ -1,7 +1,8 @@
-const WALLETCONNECT_PROJECT_ID_ENV = "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID"
-const APP_URL_ENV = "NEXT_PUBLIC_APP_URL"
+import { getPublicAppUrl } from "@/lib/site/url"
 
-function readEnvValue(name: typeof WALLETCONNECT_PROJECT_ID_ENV | typeof APP_URL_ENV) {
+const WALLETCONNECT_PROJECT_ID_ENV = "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID"
+
+function readEnvValue(name: typeof WALLETCONNECT_PROJECT_ID_ENV) {
   return process.env[name]
 }
 
@@ -28,5 +29,5 @@ export function getWalletIntegrationDisabledReason() {
 }
 
 export function getWeb3AppUrl() {
-  return readEnvValue(APP_URL_ENV) ?? "http://localhost:3000"
+  return getPublicAppUrl()
 }

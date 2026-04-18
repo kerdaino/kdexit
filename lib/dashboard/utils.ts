@@ -1,4 +1,8 @@
 import type { Execution, Strategy, StrategyStatus, TriggerType } from "@/types/strategy"
+import {
+  getStrategyChainEntryByLabel,
+  primaryKdexitChain,
+} from "@/lib/web3/chains"
 
 export function formatTimestamp(date: Date = new Date()) {
   return date.toLocaleString()
@@ -6,6 +10,24 @@ export function formatTimestamp(date: Date = new Date()) {
 
 export function generateClientId() {
   return crypto.randomUUID()
+}
+
+type LegacyStrategyShape = Omit<
+  Strategy,
+  "tokenAddress" | "chainId" | "triggerEnabled" | "notes"
+> &
+  Partial<Pick<Strategy, "tokenAddress" | "chainId" | "triggerEnabled" | "notes">>
+
+export function normalizeStrategy(strategy: LegacyStrategyShape): Strategy {
+  const chainEntry = getStrategyChainEntryByLabel(strategy.chain)
+
+  return {
+    ...strategy,
+    tokenAddress: strategy.tokenAddress ?? "",
+    chainId: strategy.chainId ?? chainEntry.chain.id ?? primaryKdexitChain.chain.id,
+    triggerEnabled: strategy.triggerEnabled ?? true,
+    notes: strategy.notes?.trim() ? strategy.notes.trim() : undefined,
+  }
 }
 
 export function countStrategiesByStatus(

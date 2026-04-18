@@ -32,13 +32,21 @@ Required variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_APP_URL`
 
 Optional wallet variables:
 
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
-- `NEXT_PUBLIC_APP_URL`
+
+Optional data mode variable:
+
+- `NEXT_PUBLIC_STRATEGY_DATA_MODE`
 
 If `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is missing, wallet connection UI stays visible in a disabled state instead of crashing the app.
+
+For Vercel or any production deployment, `NEXT_PUBLIC_APP_URL` should be set to your final public origin, for example `https://app.kdexit.com`.
+
+`NEXT_PUBLIC_STRATEGY_DATA_MODE` defaults to `localStorage`. For a real multi-user production setup, set it deliberately and make sure the matching infrastructure is configured.
 
 ## Learn More
 

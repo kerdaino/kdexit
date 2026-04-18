@@ -1,4 +1,5 @@
 import { initialExecutions, initialStrategies } from "@/lib/mocks/dashboard"
+import { normalizeStrategy } from "@/lib/dashboard/utils"
 import type { Execution, Strategy } from "@/types/strategy"
 
 const DASHBOARD_STORAGE_KEYS = {
@@ -21,11 +22,13 @@ function saveStoredItem<T>(key: string, value: T) {
 }
 
 export function loadDashboardData() {
+  const storedStrategies = loadStoredItem<Strategy[]>(
+    DASHBOARD_STORAGE_KEYS.strategies,
+    initialStrategies
+  )
+
   return {
-    strategies: loadStoredItem<Strategy[]>(
-      DASHBOARD_STORAGE_KEYS.strategies,
-      initialStrategies
-    ),
+    strategies: storedStrategies.map((strategy) => normalizeStrategy(strategy)),
     executions: loadStoredItem<Execution[]>(
       DASHBOARD_STORAGE_KEYS.executions,
       initialExecutions

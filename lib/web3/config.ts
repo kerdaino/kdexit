@@ -12,7 +12,7 @@ export const metadata = {
   description:
     "KDEXIT helps traders manage take-profit and stop-loss strategies with a clean dashboard built for control, visibility, and future automation.",
   url: getWeb3AppUrl(),
-  icons: ["https://avatars.githubusercontent.com/u/37784886"],
+  icons: [`${getWeb3AppUrl()}/favicon.ico`],
 }
 
 const chains = kdexitWalletChains
