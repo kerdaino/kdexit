@@ -2,35 +2,23 @@
 
 import { useMemo, useState } from "react"
 import type { Strategy } from "@/types/strategy"
+import { getStrategyStatusClass } from "@/lib/dashboard/utils"
 import SectionHeading from "@/components/shared/section-heading"
 
 type StrategyListProps = {
   strategies: Strategy[]
-  onPauseStrategy: (id: string) => void
-  onResumeStrategy: (id: string) => void
-  onDeleteStrategy: (id: string) => void
+  pendingStrategyActionById?: Record<string, "pause" | "resume" | "delete" | undefined>
+  onPauseStrategy: (id: string) => Promise<void>
+  onResumeStrategy: (id: string) => Promise<void>
+  onDeleteStrategy: (id: string) => Promise<boolean>
   onEditStrategy: (strategy: Strategy) => void
 }
 
 type FilterStatus = "all" | "active" | "paused"
 
-function getStatusClass(status: Strategy["status"]) {
-  switch (status) {
-    case "active":
-      return "bg-emerald-500/15 text-emerald-400"
-    case "paused":
-      return "bg-yellow-500/15 text-yellow-400"
-    case "triggered":
-      return "bg-blue-500/15 text-blue-400"
-    case "completed":
-      return "bg-purple-500/15 text-purple-400"
-    default:
-      return "bg-gray-500/15 text-gray-400"
-  }
-}
-
 export default function StrategyList({
   strategies,
+  pendingStrategyActionById = {},
   onPauseStrategy,
   onResumeStrategy,
   onDeleteStrategy,
@@ -52,22 +40,25 @@ export default function StrategyList({
 
   function handleConfirmDelete() {
     if (!strategyToDelete) return
-    onDeleteStrategy(strategyToDelete.id)
-    setStrategyToDelete(null)
+    void onDeleteStrategy(strategyToDelete.id).then((wasSuccessful) => {
+      if (wasSuccessful) {
+        setStrategyToDelete(null)
+      }
+    })
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <SectionHeading
           title="Strategies"
           description="View and manage your take-profit and stop-loss rules."
         />
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           <button
             onClick={() => setFilter("all")}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getFilterButtonClass(
+            className={`min-h-11 rounded-xl px-3 py-2 text-sm font-medium transition sm:px-4 ${getFilterButtonClass(
               "all"
             )}`}
           >
@@ -75,7 +66,7 @@ export default function StrategyList({
           </button>
           <button
             onClick={() => setFilter("active")}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getFilterButtonClass(
+            className={`min-h-11 rounded-xl px-3 py-2 text-sm font-medium transition sm:px-4 ${getFilterButtonClass(
               "active"
             )}`}
           >
@@ -83,7 +74,7 @@ export default function StrategyList({
           </button>
           <button
             onClick={() => setFilter("paused")}
-            className={`rounded-xl px-4 py-2 text-sm font-medium transition ${getFilterButtonClass(
+            className={`min-h-11 rounded-xl px-3 py-2 text-sm font-medium transition sm:px-4 ${getFilterButtonClass(
               "paused"
             )}`}
           >
@@ -106,14 +97,18 @@ export default function StrategyList({
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               onClick={handleConfirmDelete}
-              className="rounded-xl border border-red-500/30 bg-red-500/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20"
+              disabled={pendingStrategyActionById[strategyToDelete.id] === "delete"}
+              className="rounded-xl border border-red-500/30 bg-red-500/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Yes, Delete
+              {pendingStrategyActionById[strategyToDelete.id] === "delete"
+                ? "Deleting..."
+                : "Yes, Delete"}
             </button>
 
             <button
               onClick={() => setStrategyToDelete(null)}
-              className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/5"
+              disabled={pendingStrategyActionById[strategyToDelete.id] === "delete"}
+              className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
@@ -123,32 +118,40 @@ export default function StrategyList({
 
       <div className="mt-6 space-y-4">
         {filteredStrategies.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-5">
-            <p className="text-sm text-gray-300">
-              No {filter === "all" ? "" : filter} strategies found.
-            </p>
-            <p className="mt-1 text-sm text-gray-500">
+          <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-5 sm:p-6">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-lg text-emerald-400">
+              S
+            </div>
+            <p className="mt-4 text-base font-semibold text-white">
               {filter === "all"
-                ? "Create your first strategy to get started."
-                : `Try switching filters or create a new ${filter} strategy.`}
+                ? "No strategies yet"
+                : `No ${filter} strategies right now`}
+            </p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-gray-400">
+              {filter === "all"
+                ? "Create your first take-profit or stop-loss rule to start building a more disciplined exit workflow."
+                : `Nothing in this filter at the moment. Try switching views or create a new strategy to populate your ${filter} list.`}
+            </p>
+            <p className="mt-4 text-xs uppercase tracking-[0.18em] text-gray-500">
+              Strategies you create will appear here for quick review and management.
             </p>
           </div>
         ) : (
           filteredStrategies.map((strategy) => (
             <div
               key={strategy.id}
-              className="rounded-2xl border border-white/10 bg-black/20 p-4"
+              className="rounded-2xl border border-white/10 bg-black/20 p-4 sm:p-5"
             >
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-base font-semibold text-white sm:text-lg">
                       {strategy.tokenName} ({strategy.tokenSymbol})
                     </h3>
-                    <p className="mt-1 text-sm text-gray-400">
+                    <p className="mt-1 text-sm leading-6 text-gray-400">
                       Chain: {strategy.chain} • Sell: {strategy.sellPercentage}%
                     </p>
-                    <p className="mt-1 text-sm text-gray-400">
+                    <p className="mt-1 text-sm leading-6 text-gray-400">
                       TP: {strategy.takeProfitPrice ?? "-"} • SL:{" "}
                       {strategy.stopLossPrice ?? "-"}
                     </p>
@@ -158,7 +161,7 @@ export default function StrategyList({
                   </div>
 
                   <span
-                    className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium capitalize ${getStatusClass(
+                    className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium capitalize ${getStrategyStatusClass(
                       strategy.status
                     )}`}
                   >
@@ -166,33 +169,41 @@ export default function StrategyList({
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
                   <button
                     onClick={() => onEditStrategy(strategy)}
-                    className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/15"
+                    disabled={Boolean(pendingStrategyActionById[strategy.id])}
+                    className="min-h-11 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Edit
                   </button>
 
                   {strategy.status === "active" ? (
                     <button
-                      onClick={() => onPauseStrategy(strategy.id)}
-                      className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/15"
+                      onClick={() => void onPauseStrategy(strategy.id)}
+                      disabled={pendingStrategyActionById[strategy.id] === "pause"}
+                      className="min-h-11 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Pause
+                      {pendingStrategyActionById[strategy.id] === "pause"
+                        ? "Pausing..."
+                        : "Pause"}
                     </button>
                   ) : strategy.status === "paused" ? (
                     <button
-                      onClick={() => onResumeStrategy(strategy.id)}
-                      className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/15"
+                      onClick={() => void onResumeStrategy(strategy.id)}
+                      disabled={pendingStrategyActionById[strategy.id] === "resume"}
+                      className="min-h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Resume
+                      {pendingStrategyActionById[strategy.id] === "resume"
+                        ? "Resuming..."
+                        : "Resume"}
                     </button>
                   ) : null}
 
                   <button
+                    disabled={Boolean(pendingStrategyActionById[strategy.id])}
                     onClick={() => setStrategyToDelete(strategy)}
-                    className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/15"
+                    className="min-h-11 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Delete
                   </button>

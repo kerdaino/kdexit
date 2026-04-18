@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { generateClientId } from "@/lib/dashboard/utils"
+import { kdexitStrategyChainOptions, primaryKdexitChain } from "@/lib/web3/chains"
 import type { Strategy } from "@/types/strategy"
 
 type CreateStrategyFormProps = {
-  onAddStrategy: (strategy: Strategy) => void
-  onUpdateStrategy: (strategy: Strategy) => void
+  onAddStrategy: (strategy: Strategy) => Promise<boolean>
+  onUpdateStrategy: (strategy: Strategy) => Promise<boolean>
   onCancel: () => void
   editingStrategy?: Strategy | null
 }
@@ -25,7 +27,7 @@ function getInitialFormValues(editingStrategy?: Strategy | null) {
     return {
       tokenName: "",
       tokenSymbol: "",
-      chain: "BNB Chain",
+      chain: primaryKdexitChain.label,
       sellPercentage: "",
       takeProfitPrice: "",
       stopLossPrice: "",
@@ -66,6 +68,7 @@ export default function CreateStrategyForm({
   const [stopLossPrice, setStopLossPrice] = useState(initialValues.stopLossPrice)
   const [slippage, setSlippage] = useState(initialValues.slippage)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   function validateForm() {
     const nextErrors: FormErrors = {}
@@ -128,13 +131,13 @@ export default function CreateStrategyForm({
     return Object.keys(nextErrors).length === 0
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    if (!validateForm()) return
+    if (!validateForm() || isSubmitting) return
 
     const strategyPayload: Strategy = {
-      id: editingStrategy?.id ?? crypto.randomUUID(),
+      id: editingStrategy?.id ?? generateClientId(),
       tokenName: tokenName.trim(),
       tokenSymbol: tokenSymbol.trim().toUpperCase(),
       chain,
@@ -146,25 +149,31 @@ export default function CreateStrategyForm({
       createdAt: editingStrategy?.createdAt ?? new Date().toISOString(),
     }
 
-    if (editingStrategy) {
-      onUpdateStrategy(strategyPayload)
-    } else {
-      onAddStrategy(strategyPayload)
-    }
+    setIsSubmitting(true)
 
-    onCancel()
+    try {
+      const wasSuccessful = editingStrategy
+        ? await onUpdateStrategy(strategyPayload)
+        : await onAddStrategy(strategyPayload)
+
+      if (wasSuccessful) {
+        onCancel()
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const isEditing = Boolean(editingStrategy)
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-lg font-semibold text-white sm:text-xl">
             {isEditing ? "Edit Strategy" : "Create New Strategy"}
           </h2>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm leading-6 text-gray-400">
             {isEditing
               ? "Update your take-profit and stop-loss rules."
               : "Set your take-profit and stop-loss rules."}
@@ -174,7 +183,8 @@ export default function CreateStrategyForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-xl border border-white/10 px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
+          disabled={isSubmitting}
+          className="min-h-11 rounded-xl border border-white/10 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           Cancel
         </button>
@@ -193,8 +203,9 @@ export default function CreateStrategyForm({
             type="text"
             value={tokenName}
             onChange={(e) => setTokenName(e.target.value)}
+            disabled={isSubmitting}
             placeholder="e.g. Binance Coin"
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
+            className="min-h-12 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
           />
           {errors.tokenName ? (
             <p className="mt-2 text-sm text-red-400">{errors.tokenName}</p>
@@ -207,8 +218,9 @@ export default function CreateStrategyForm({
             type="text"
             value={tokenSymbol}
             onChange={(e) => setTokenSymbol(e.target.value)}
+            disabled={isSubmitting}
             placeholder="e.g. BNB"
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
+            className="min-h-12 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
           />
           {errors.tokenSymbol ? (
             <p className="mt-2 text-sm text-red-400">{errors.tokenSymbol}</p>
@@ -220,11 +232,12 @@ export default function CreateStrategyForm({
           <select
             value={chain}
             onChange={(e) => setChain(e.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
+            disabled={isSubmitting}
+            className="min-h-12 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <option>BNB Chain</option>
-            <option>Polygon</option>
-            <option>Ethereum</option>
+            {kdexitStrategyChainOptions.map((chainOption) => (
+              <option key={chainOption}>{chainOption}</option>
+            ))}
           </select>
         </div>
 
@@ -234,8 +247,9 @@ export default function CreateStrategyForm({
             type="number"
             value={sellPercentage}
             onChange={(e) => setSellPercentage(e.target.value)}
+            disabled={isSubmitting}
             placeholder="e.g. 50"
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
+            className="min-h-12 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
           />
           {errors.sellPercentage ? (
             <p className="mt-2 text-sm text-red-400">{errors.sellPercentage}</p>
@@ -248,8 +262,9 @@ export default function CreateStrategyForm({
             type="number"
             value={takeProfitPrice}
             onChange={(e) => setTakeProfitPrice(e.target.value)}
+            disabled={isSubmitting}
             placeholder="e.g. 850"
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
+            className="min-h-12 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
           />
           {errors.takeProfitPrice ? (
             <p className="mt-2 text-sm text-red-400">{errors.takeProfitPrice}</p>
@@ -262,8 +277,9 @@ export default function CreateStrategyForm({
             type="number"
             value={stopLossPrice}
             onChange={(e) => setStopLossPrice(e.target.value)}
+            disabled={isSubmitting}
             placeholder="e.g. 540"
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
+            className="min-h-12 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
           />
           {errors.stopLossPrice ? (
             <p className="mt-2 text-sm text-red-400">{errors.stopLossPrice}</p>
@@ -276,26 +292,35 @@ export default function CreateStrategyForm({
             type="number"
             value={slippage}
             onChange={(e) => setSlippage(e.target.value)}
+            disabled={isSubmitting}
             placeholder="e.g. 1"
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
+            className="min-h-12 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
           />
           {errors.slippage ? (
             <p className="mt-2 text-sm text-red-400">{errors.slippage}</p>
           ) : null}
         </div>
 
-        <div className="md:col-span-2 flex gap-3">
+        <div className="md:col-span-2 flex flex-col gap-3 sm:flex-row">
           <button
             type="submit"
-            className="rounded-2xl bg-emerald-500 px-6 py-3 font-semibold text-black"
+            disabled={isSubmitting}
+            className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-emerald-500 px-6 py-3 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isEditing ? "Update Strategy" : "Save Strategy"}
+            {isSubmitting
+              ? isEditing
+                ? "Updating..."
+                : "Saving..."
+              : isEditing
+                ? "Update Strategy"
+                : "Save Strategy"}
           </button>
 
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-2xl border border-white/10 px-6 py-3 font-semibold text-white hover:bg-white/5"
+            disabled={isSubmitting}
+            className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 px-6 py-3 font-semibold text-white hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Close
           </button>
