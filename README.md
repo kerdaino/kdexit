@@ -31,8 +31,12 @@ cp .env.example .env.local
 Required variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_APP_URL`
+
+One public Supabase client key is required:
+
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 Optional wallet variables:
 
@@ -46,7 +50,7 @@ If `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is missing, wallet connection UI stays
 
 For Vercel or any production deployment, `NEXT_PUBLIC_APP_URL` should be set to your final public origin, for example `https://app.kdexit.com`.
 
-`NEXT_PUBLIC_STRATEGY_DATA_MODE` defaults to `localStorage`. For a real multi-user production setup, set it deliberately and make sure the matching infrastructure is configured.
+`NEXT_PUBLIC_STRATEGY_DATA_MODE` defaults to `localStorage`. For the authenticated Supabase-backed dashboard flow, set it to `supabase`. Keep `localStorage` only for explicit local/dev fallback use.
 
 ## Learn More
 

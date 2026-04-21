@@ -9,14 +9,6 @@ export type DataAccessResult<T> = {
   isPlaceholder: boolean
 }
 
-export function buildPlaceholderResult<T>(data: T): DataAccessResult<T> {
-  return {
-    data,
-    error: null,
-    isPlaceholder: true,
-  }
-}
-
 export function buildDatabaseResult<T>(data: T): DataAccessResult<T> {
   return {
     data,

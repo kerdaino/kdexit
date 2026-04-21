@@ -60,16 +60,3 @@ export function jsonValidationError(
     details: { fields },
   })
 }
-
-export function jsonNotImplemented(operation: string) {
-  return jsonError(
-    "not_implemented",
-    `${operation} is not implemented yet.`,
-    {
-      status: 501,
-      details: {
-        phase: "placeholder",
-      },
-    }
-  )
-}
