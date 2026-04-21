@@ -1,6 +1,7 @@
 export {
   createExecution,
   deleteExecution,
+  getExecution,
   listExecutions,
   updateExecution,
 } from "@/lib/data/executions"
@@ -11,6 +12,7 @@ export {
 export {
   createStrategy,
   deleteStrategy,
+  getStrategy,
   listStrategies,
   pauseStrategy,
   resumeStrategy,

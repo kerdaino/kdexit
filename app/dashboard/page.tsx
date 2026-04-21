@@ -1,127 +1,57 @@
-"use client"
-
-import ActivityHistoryPanel from "@/components/dashboard/activity-history-panel"
-import DashboardShell from "@/components/dashboard/dashboard-shell"
-import QuickActionsPanel from "@/components/dashboard/quick-actions-panel"
-import SettingsPanel from "@/components/dashboard/settings-panel"
-import StrategyManagementPanel from "@/components/dashboard/strategy-management-panel"
-import SummaryStatsPanel from "@/components/dashboard/summary-stats-panel"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import DashboardPageClient from "@/components/dashboard/dashboard-page-client"
 import Footer from "@/components/shared/footer"
 import TopNavigation from "@/components/shared/top-navigation"
-import {
-  dashboardSections,
-  useDashboardController,
-} from "@/lib/dashboard/use-dashboard-controller"
+import { hasSupabaseEnv } from "@/lib/supabase/env"
+import { getSupabaseUser } from "@/lib/supabase/server"
 
-export default function DashboardPage() {
-  const {
-    activeSection,
-    activeStrategies,
-    currentDataMode,
-    editingStrategy,
-    executions,
-    feedback,
-    handleAddStrategy,
-    handleCloseForm,
-    handleDeleteStrategy,
-    handleEditStrategy,
-    handleOpenNewStrategy,
-    handlePauseStrategy,
-    handleResumeStrategy,
-    handleUpdateStrategy,
-    isHydrated,
-    pausedStrategies,
-    pendingStrategyActionById,
-    recentExecutions,
-    setActiveSection,
-    showForm,
-    strategies,
-    totalStrategies,
-  } = useDashboardController()
-
-  if (!isHydrated) {
+export default async function DashboardPage() {
+  if (!hasSupabaseEnv()) {
     return (
       <main className="min-h-screen bg-[#0B0F14] text-[#E5E7EB]">
         <TopNavigation variant="dashboard" />
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-          <p className="text-sm text-gray-400">Loading dashboard...</p>
+        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+            <p className="text-xs uppercase tracking-[0.22em] text-amber-400">
+              Dashboard Access
+            </p>
+            <h1 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+              Sign-in protection is not configured yet.
+            </h1>
+            <p className="mt-4 text-sm leading-7 text-gray-400 sm:text-base">
+              The dashboard now expects authenticated access before loading private
+              strategy and execution data. Add the required public Supabase auth
+              environment variables to enable protected dashboard access.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-semibold text-white hover:bg-white/10"
+              >
+                Back to Home
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 font-semibold text-black hover:bg-emerald-400"
+              >
+                Open Login
+              </Link>
+            </div>
+          </div>
         </div>
         <Footer />
       </main>
     )
   }
 
+  const user = await getSupabaseUser()
+
+  if (!user) {
+    redirect("/login?next=%2Fdashboard")
+  }
+
   return (
-    <main className="min-h-screen bg-[#0B0F14] text-[#E5E7EB]">
-      <TopNavigation variant="dashboard" />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <DashboardShell
-          activeSection={activeSection}
-          currentDataMode={currentDataMode}
-          feedback={feedback}
-          onNewStrategy={handleOpenNewStrategy}
-          onSelectSection={setActiveSection}
-          onViewActivity={() => setActiveSection("activity")}
-          sections={dashboardSections}
-        >
-          {activeSection === "overview" ? (
-            <div className="space-y-6">
-              <SummaryStatsPanel
-                activeStrategies={activeStrategies}
-                executionsCount={executions.length}
-                pausedStrategies={pausedStrategies}
-                totalStrategies={totalStrategies}
-              />
-              <QuickActionsPanel
-                activeStrategies={activeStrategies}
-                currentDataMode={currentDataMode}
-                pausedStrategies={pausedStrategies}
-                recentExecutionsCount={recentExecutions.length}
-                showForm={showForm}
-                onCreateStrategy={handleOpenNewStrategy}
-                onManageStrategies={() => setActiveSection("strategies")}
-                onOpenActivity={() => setActiveSection("activity")}
-                onOpenSettings={() => setActiveSection("settings")}
-              />
-              <ActivityHistoryPanel
-                description="Track the latest create, update, pause, resume, and delete events at a glance."
-                executions={recentExecutions}
-                title="Latest execution activity"
-              />
-            </div>
-          ) : null}
-
-          {activeSection === "strategies" ? (
-            <StrategyManagementPanel
-              editingStrategy={editingStrategy}
-              pendingStrategyActionById={pendingStrategyActionById}
-              showForm={showForm}
-              strategies={strategies}
-              onAddStrategy={handleAddStrategy}
-              onCloseForm={handleCloseForm}
-              onDeleteStrategy={handleDeleteStrategy}
-              onEditStrategy={handleEditStrategy}
-              onOpenNewStrategy={handleOpenNewStrategy}
-              onPauseStrategy={handlePauseStrategy}
-              onResumeStrategy={handleResumeStrategy}
-              onUpdateStrategy={handleUpdateStrategy}
-            />
-          ) : null}
-
-          {activeSection === "activity" ? (
-            <ActivityHistoryPanel
-              description="Track every create, update, pause, resume, and delete event in one place to keep the workflow easy to audit."
-              executions={executions}
-              title="Review the execution timeline"
-            />
-          ) : null}
-
-          {activeSection === "settings" ? (
-            <SettingsPanel currentDataMode={currentDataMode} />
-          ) : null}
-        </DashboardShell>
-      </div>
-      <Footer />
-    </main>
+    <DashboardPageClient />
   )
 }

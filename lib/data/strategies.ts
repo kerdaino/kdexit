@@ -1,10 +1,9 @@
 import {
   buildDatabaseResult,
   buildErrorResult,
-  buildPlaceholderResult,
-  createRecordId,
   getIsoTimestamp,
-  getOptionalBrowserClient,
+  getAuthenticatedBrowserUser,
+  getRequiredBrowserClient,
   type DataAccessResult,
 } from "@/lib/data/shared"
 import type {
@@ -13,35 +12,23 @@ import type {
   StrategyUpdate,
 } from "@/types/database-records"
 
-function createPlaceholderStrategy(input: StrategyInsert): StrategyRecord {
-  const timestamp = input.created_at ?? getIsoTimestamp()
-
-  return {
-    id: input.id ?? createRecordId(),
-    wallet_address: input.wallet_address,
-    token_name: input.token_name,
-    token_symbol: input.token_symbol,
-    chain: input.chain,
-    sell_percentage: input.sell_percentage,
-    take_profit_price: input.take_profit_price ?? null,
-    stop_loss_price: input.stop_loss_price ?? null,
-    slippage: input.slippage,
-    status: input.status ?? "active",
-    created_at: timestamp,
-    updated_at: input.updated_at ?? timestamp,
-  }
-}
-
 export async function listStrategies(): Promise<DataAccessResult<StrategyRecord[]>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult([])
+    return buildErrorResult([], "Supabase strategy mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult([], "You must be signed in to load strategies.")
   }
 
   const { data, error } = await client
     .from("strategies")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
   if (error) {
@@ -51,17 +38,56 @@ export async function listStrategies(): Promise<DataAccessResult<StrategyRecord[
   return buildDatabaseResult(data)
 }
 
+export async function getStrategy(
+  id: string
+): Promise<DataAccessResult<StrategyRecord | null>> {
+  const client = getRequiredBrowserClient()
+
+  if (!client) {
+    return buildErrorResult(null, "Supabase strategy mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to load a strategy.")
+  }
+
+  const { data, error } = await client
+    .from("strategies")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (error) {
+    return buildErrorResult(null, error.message)
+  }
+
+  return buildDatabaseResult(data)
+}
+
 export async function createStrategy(
   input: StrategyInsert
 ): Promise<DataAccessResult<StrategyRecord | null>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult(createPlaceholderStrategy(input))
+    return buildErrorResult(null, "Supabase strategy mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to create a strategy.")
   }
 
   const payload: StrategyInsert = {
     ...input,
+    user_id: user.id,
+    token_address: input.token_address ?? "",
+    trigger_enabled: input.trigger_enabled ?? true,
+    notes: input.notes ?? null,
     updated_at: input.updated_at ?? getIsoTimestamp(),
   }
 
@@ -82,10 +108,16 @@ export async function updateStrategy(
   id: string,
   updates: StrategyUpdate
 ): Promise<DataAccessResult<StrategyRecord | null>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult(null)
+    return buildErrorResult(null, "Supabase strategy mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to update a strategy.")
   }
 
   const { data, error } = await client
@@ -93,10 +125,12 @@ export async function updateStrategy(
     .update(
       {
         ...updates,
+        user_id: user.id,
         updated_at: updates.updated_at ?? getIsoTimestamp(),
       } as never
     )
     .eq("id", id)
+    .eq("user_id", user.id)
     .select()
     .single()
 
@@ -108,13 +142,23 @@ export async function updateStrategy(
 }
 
 export async function deleteStrategy(id: string): Promise<DataAccessResult<{ id: string } | null>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult({ id })
+    return buildErrorResult(null, "Supabase strategy mode is not enabled.")
   }
 
-  const { error } = await client.from("strategies").delete().eq("id", id)
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to delete a strategy.")
+  }
+
+  const { error } = await client
+    .from("strategies")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
 
   if (error) {
     return buildErrorResult(null, error.message)
@@ -126,11 +170,11 @@ export async function deleteStrategy(id: string): Promise<DataAccessResult<{ id:
 export async function pauseStrategy(
   id: string
 ): Promise<DataAccessResult<StrategyRecord | null>> {
-  return updateStrategy(id, { status: "paused" })
+  return updateStrategy(id, { status: "paused", trigger_enabled: false })
 }
 
 export async function resumeStrategy(
   id: string
 ): Promise<DataAccessResult<StrategyRecord | null>> {
-  return updateStrategy(id, { status: "active" })
+  return updateStrategy(id, { status: "active", trigger_enabled: true })
 }

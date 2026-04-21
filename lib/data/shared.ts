@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js"
+import type { SupabaseClient, User } from "@supabase/supabase-js"
 import { isSupabaseStrategyExecutionMode } from "@/lib/data/config"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser"
 import type { Database } from "@/lib/supabase/types"
@@ -33,7 +33,7 @@ export function buildErrorResult<T>(data: T, error: string): DataAccessResult<T>
   }
 }
 
-export function getOptionalBrowserClient(): SupabaseClient<Database> | null {
+export function getRequiredBrowserClient(): SupabaseClient<Database> | null {
   if (!isSupabaseStrategyExecutionMode()) {
     return null
   }
@@ -45,12 +45,19 @@ export function getOptionalBrowserClient(): SupabaseClient<Database> | null {
   }
 }
 
-export function createRecordId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID()
+export async function getAuthenticatedBrowserUser(
+  client: SupabaseClient<Database>
+): Promise<User | null> {
+  const {
+    data: { user },
+    error,
+  } = await client.auth.getUser()
+
+  if (error || !user) {
+    return null
   }
 
-  return `stub-${Date.now()}`
+  return user
 }
 
 export function getIsoTimestamp() {

@@ -1,32 +1,38 @@
 type SupabaseEnv = {
   supabaseUrl: string
-  supabaseAnonKey: string
+  supabasePublishableKey: string
 }
 
-function readEnvValue(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
-  return process.env[name]
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+const supabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+
+function getConfiguredSupabaseKey() {
+  return supabasePublishableKey ?? supabaseAnonKey
 }
 
-function getEnvValue(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
-  const value = readEnvValue(name)
-
+function getRequiredValue(
+  value: string | undefined,
+  missingVariableLabel: string
+) {
   if (!value) {
-    throw new Error(`Missing required Supabase environment variable: ${name}`)
+    throw new Error(`Missing required Supabase environment variable: ${missingVariableLabel}`)
   }
 
   return value
 }
 
 export function hasSupabaseEnv() {
-  return Boolean(
-    readEnvValue("NEXT_PUBLIC_SUPABASE_URL") &&
-      readEnvValue("NEXT_PUBLIC_SUPABASE_ANON_KEY")
-  )
+  return Boolean(supabaseUrl && getConfiguredSupabaseKey())
 }
 
 export function getSupabaseEnv(): SupabaseEnv {
   return {
-    supabaseUrl: getEnvValue("NEXT_PUBLIC_SUPABASE_URL"),
-    supabaseAnonKey: getEnvValue("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    supabaseUrl: getRequiredValue(supabaseUrl, "NEXT_PUBLIC_SUPABASE_URL"),
+    supabasePublishableKey: getRequiredValue(
+      getConfiguredSupabaseKey(),
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    ),
   }
 }

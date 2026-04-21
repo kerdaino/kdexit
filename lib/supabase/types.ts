@@ -18,6 +18,25 @@ import type {
   StrategyUpdate,
 } from "@/types/database-records"
 
+type ProfileRecord = {
+  id: string
+  primary_wallet_address: string | null
+  created_at: string
+  updated_at: string
+}
+
+type ProfileInsert = {
+  id: string
+  primary_wallet_address?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+type ProfileUpdate = {
+  primary_wallet_address?: string | null
+  updated_at?: string
+}
+
 type TableDefinition<Row, Insert, Update> = {
   Row: Row
   Insert: Insert
@@ -28,6 +47,7 @@ type TableDefinition<Row, Insert, Update> = {
 export type Database = {
   public: {
     Tables: {
+      profiles: TableDefinition<ProfileRecord, ProfileInsert, ProfileUpdate>
       executions: TableDefinition<ExecutionRecord, ExecutionInsert, ExecutionUpdate>
       strategies: TableDefinition<StrategyRecord, StrategyInsert, StrategyUpdate>
     }

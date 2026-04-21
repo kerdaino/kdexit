@@ -8,12 +8,6 @@ import {
   resumeStrategy,
   updateStrategy,
 } from "@/lib/data"
-import {
-  loadDashboardData,
-  saveDashboardExecutions,
-  saveDashboardStrategies,
-} from "@/lib/dashboard/storage"
-import { normalizeStrategy } from "@/lib/dashboard/utils"
 import { getStrategyChainEntryByLabel } from "@/lib/web3/chains"
 import type {
   ExecutionInsert,
@@ -23,46 +17,47 @@ import type {
 } from "@/types/database-records"
 import type { Execution, Strategy, TriggerType } from "@/types/strategy"
 
-const LOCAL_WALLET_ADDRESS = "local-wallet"
-
 type DashboardExecutionInput = Omit<Execution, "id" | "executedAt"> & {
   id?: string
   executedAt?: string
   strategyId?: string
 }
 
-function toStrategy(record: StrategyRecord): Strategy {
+export function toDashboardStrategy(record: StrategyRecord): Strategy {
   const chainEntry = getStrategyChainEntryByLabel(record.chain)
 
   return {
     id: record.id,
+    tokenAddress: record.token_address,
     tokenName: record.token_name,
     tokenSymbol: record.token_symbol,
-    tokenAddress: "",
     chain: record.chain,
-    chainId: chainEntry.chain.id,
+    chainId: record.chain_id ?? chainEntry.chain.id,
     sellPercentage: record.sell_percentage,
     takeProfitPrice: record.take_profit_price ?? undefined,
     stopLossPrice: record.stop_loss_price ?? undefined,
-    triggerEnabled: record.status === "active",
+    triggerEnabled: record.trigger_enabled,
     slippage: record.slippage,
-    notes: undefined,
+    notes: record.notes ?? undefined,
     status: record.status,
     createdAt: record.created_at,
   }
 }
 
-function toStrategyInsert(strategy: Strategy): StrategyInsert {
+export function toStrategyInsert(strategy: Strategy): StrategyInsert {
   return {
     id: strategy.id,
-    wallet_address: LOCAL_WALLET_ADDRESS,
     token_name: strategy.tokenName,
     token_symbol: strategy.tokenSymbol,
+    token_address: strategy.tokenAddress,
     chain: strategy.chain,
+    chain_id: strategy.chainId,
     sell_percentage: strategy.sellPercentage,
     take_profit_price: strategy.takeProfitPrice ?? null,
     stop_loss_price: strategy.stopLossPrice ?? null,
+    trigger_enabled: strategy.triggerEnabled,
     slippage: strategy.slippage,
+    notes: strategy.notes ?? null,
     status: strategy.status,
     created_at: strategy.createdAt,
     updated_at: new Date().toISOString(),
@@ -79,7 +74,7 @@ function parseAmountSold(value: string) {
   return Number(match[0])
 }
 
-function toExecution(record: ExecutionRecord): Execution {
+export function toDashboardExecution(record: ExecutionRecord): Execution {
   return {
     id: record.id,
     tokenSymbol: record.token_symbol,
@@ -94,17 +89,17 @@ function toExecution(record: ExecutionRecord): Execution {
   }
 }
 
-function toExecutionInsert(input: DashboardExecutionInput): ExecutionInsert {
+export function toExecutionInsert(input: DashboardExecutionInput): ExecutionInsert {
   return {
     id: input.id,
-    strategy_id: input.strategyId ?? "local-strategy",
-    wallet_address: LOCAL_WALLET_ADDRESS,
+    strategy_id: input.strategyId ?? null,
     token_symbol: input.tokenSymbol,
     trigger_type: input.triggerType,
     amount_sold: parseAmountSold(input.amountSold),
     status: input.status,
     executed_at: input.executedAt,
     created_at: input.executedAt,
+    updated_at: input.executedAt,
   }
 }
 
@@ -140,17 +135,11 @@ export async function listDashboardStrategies() {
   try {
     const result = await listStrategies()
 
-    if (result.isPlaceholder) {
-      const { strategies } = loadDashboardData()
-      return strategies
-    }
-
     if (result.error) {
-      console.error("Failed to load strategies from repository:", result.error)
-      return []
+      throw new Error(result.error)
     }
 
-    return result.data.map(toStrategy)
+    return result.data.map(toDashboardStrategy)
   } catch (error) {
     console.error("Failed to load strategies:", error)
     return []
@@ -161,17 +150,11 @@ export async function listDashboardExecutions() {
   try {
     const result = await listExecutions()
 
-    if (result.isPlaceholder) {
-      const { executions } = loadDashboardData()
-      return executions
-    }
-
     if (result.error) {
-      console.error("Failed to load executions from repository:", result.error)
-      return []
+      throw new Error(result.error)
     }
 
-    return result.data.map(toExecution)
+    return result.data.map(toDashboardExecution)
   } catch (error) {
     console.error("Failed to load executions:", error)
     return []
@@ -181,56 +164,38 @@ export async function listDashboardExecutions() {
 export async function createDashboardStrategy(strategy: Strategy) {
   const result = await createStrategy(toStrategyInsert(strategy))
 
-  if (result.isPlaceholder) {
-    const { strategies } = loadDashboardData()
-    const nextStrategies = [normalizeStrategy(strategy), ...strategies]
-    saveDashboardStrategies(nextStrategies)
-    return normalizeStrategy(strategy)
-  }
-
   if (result.error || !result.data) {
     throw new Error(result.error ?? "Failed to create strategy.")
   }
 
-  return toStrategy(result.data)
+  return toDashboardStrategy(result.data)
 }
 
 export async function updateDashboardStrategy(strategy: Strategy) {
   const result = await updateStrategy(strategy.id, {
     token_name: strategy.tokenName,
     token_symbol: strategy.tokenSymbol,
+    token_address: strategy.tokenAddress,
     chain: strategy.chain,
+    chain_id: strategy.chainId,
     sell_percentage: strategy.sellPercentage,
     take_profit_price: strategy.takeProfitPrice ?? null,
     stop_loss_price: strategy.stopLossPrice ?? null,
+    trigger_enabled: strategy.triggerEnabled,
     slippage: strategy.slippage,
+    notes: strategy.notes ?? null,
     status: strategy.status,
   })
-
-  if (result.isPlaceholder) {
-    const { strategies } = loadDashboardData()
-    const nextStrategies = strategies.map((entry) =>
-      entry.id === strategy.id ? normalizeStrategy(strategy) : entry
-    )
-    saveDashboardStrategies(nextStrategies)
-    return normalizeStrategy(strategy)
-  }
 
   if (result.error || !result.data) {
     throw new Error(result.error ?? "Failed to update strategy.")
   }
 
-  return toStrategy(result.data)
+  return toDashboardStrategy(result.data)
 }
 
 export async function deleteDashboardStrategy(id: string) {
   const result = await deleteStrategy(id)
-
-  if (result.isPlaceholder) {
-    const { strategies } = loadDashboardData()
-    saveDashboardStrategies(strategies.filter((strategy) => strategy.id !== id))
-    return
-  }
 
   if (result.error) {
     throw new Error(result.error)
@@ -240,74 +205,29 @@ export async function deleteDashboardStrategy(id: string) {
 export async function pauseDashboardStrategy(id: string) {
   const result = await pauseStrategy(id)
 
-  if (result.isPlaceholder) {
-    const { strategies } = loadDashboardData()
-    const target = strategies.find((strategy) => strategy.id === id)
-
-    if (!target) {
-      return null
-    }
-
-    const nextStrategy = { ...target, status: "paused" as const }
-    saveDashboardStrategies(
-      strategies.map((strategy) => (strategy.id === id ? nextStrategy : strategy))
-    )
-    return nextStrategy
-  }
-
   if (result.error || !result.data) {
     throw new Error(result.error ?? "Failed to pause strategy.")
   }
 
-  return toStrategy(result.data)
+  return toDashboardStrategy(result.data)
 }
 
 export async function resumeDashboardStrategy(id: string) {
   const result = await resumeStrategy(id)
 
-  if (result.isPlaceholder) {
-    const { strategies } = loadDashboardData()
-    const target = strategies.find((strategy) => strategy.id === id)
-
-    if (!target) {
-      return null
-    }
-
-    const nextStrategy = { ...target, status: "active" as const }
-    saveDashboardStrategies(
-      strategies.map((strategy) => (strategy.id === id ? nextStrategy : strategy))
-    )
-    return nextStrategy
-  }
-
   if (result.error || !result.data) {
     throw new Error(result.error ?? "Failed to resume strategy.")
   }
 
-  return toStrategy(result.data)
+  return toDashboardStrategy(result.data)
 }
 
 export async function createDashboardExecution(input: DashboardExecutionInput) {
   const result = await createExecution(toExecutionInsert(input))
 
-  if (result.isPlaceholder) {
-    const { executions } = loadDashboardData()
-    const nextExecution: Execution = {
-      id: input.id ?? crypto.randomUUID(),
-      tokenSymbol: input.tokenSymbol,
-      triggerType: input.triggerType,
-      amountSold: input.amountSold,
-      status: input.status,
-      executedAt: input.executedAt ?? new Date().toLocaleString(),
-    }
-
-    saveDashboardExecutions([nextExecution, ...executions])
-    return nextExecution
-  }
-
   if (result.error || !result.data) {
     throw new Error(result.error ?? "Failed to create execution.")
   }
 
-  return toExecution(result.data)
+  return toDashboardExecution(result.data)
 }

@@ -1,10 +1,9 @@
 import {
   buildDatabaseResult,
   buildErrorResult,
-  buildPlaceholderResult,
-  createRecordId,
   getIsoTimestamp,
-  getOptionalBrowserClient,
+  getAuthenticatedBrowserUser,
+  getRequiredBrowserClient,
   type DataAccessResult,
 } from "@/lib/data/shared"
 import type {
@@ -13,34 +12,23 @@ import type {
   ExecutionUpdate,
 } from "@/types/database-records"
 
-function createPlaceholderExecution(input: ExecutionInsert): ExecutionRecord {
-  const createdAt = input.created_at ?? getIsoTimestamp()
-
-  return {
-    id: input.id ?? createRecordId(),
-    strategy_id: input.strategy_id,
-    wallet_address: input.wallet_address,
-    token_symbol: input.token_symbol,
-    trigger_type: input.trigger_type,
-    amount_sold: input.amount_sold ?? null,
-    status: input.status ?? "pending",
-    transaction_hash: input.transaction_hash ?? null,
-    error_message: input.error_message ?? null,
-    executed_at: input.executed_at ?? createdAt,
-    created_at: createdAt,
-  }
-}
-
 export async function listExecutions(): Promise<DataAccessResult<ExecutionRecord[]>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult([])
+    return buildErrorResult([], "Supabase execution mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult([], "You must be signed in to load executions.")
   }
 
   const { data, error } = await client
     .from("executions")
     .select("*")
+    .eq("user_id", user.id)
     .order("executed_at", { ascending: false })
 
   if (error) {
@@ -50,18 +38,60 @@ export async function listExecutions(): Promise<DataAccessResult<ExecutionRecord
   return buildDatabaseResult(data)
 }
 
-export async function createExecution(
-  input: ExecutionInsert
+export async function getExecution(
+  id: string
 ): Promise<DataAccessResult<ExecutionRecord | null>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult(createPlaceholderExecution(input))
+    return buildErrorResult(null, "Supabase execution mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to load an execution.")
   }
 
   const { data, error } = await client
     .from("executions")
-    .insert(input as never)
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (error) {
+    return buildErrorResult(null, error.message)
+  }
+
+  return buildDatabaseResult(data)
+}
+
+export async function createExecution(
+  input: ExecutionInsert
+): Promise<DataAccessResult<ExecutionRecord | null>> {
+  const client = getRequiredBrowserClient()
+
+  if (!client) {
+    return buildErrorResult(null, "Supabase execution mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to create an execution.")
+  }
+
+  const payload: ExecutionInsert = {
+    ...input,
+    user_id: user.id,
+    strategy_id: input.strategy_id ?? null,
+    updated_at: input.updated_at ?? getIsoTimestamp(),
+  }
+
+  const { data, error } = await client
+    .from("executions")
+    .insert(payload as never)
     .select()
     .single()
 
@@ -76,16 +106,29 @@ export async function updateExecution(
   id: string,
   updates: ExecutionUpdate
 ): Promise<DataAccessResult<ExecutionRecord | null>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult(null)
+    return buildErrorResult(null, "Supabase execution mode is not enabled.")
+  }
+
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to update an execution.")
   }
 
   const { data, error } = await client
     .from("executions")
-    .update(updates as never)
+    .update(
+      {
+        ...updates,
+        user_id: user.id,
+        updated_at: updates.updated_at ?? getIsoTimestamp(),
+      } as never
+    )
     .eq("id", id)
+    .eq("user_id", user.id)
     .select()
     .single()
 
@@ -99,13 +142,23 @@ export async function updateExecution(
 export async function deleteExecution(
   id: string
 ): Promise<DataAccessResult<{ id: string } | null>> {
-  const client = getOptionalBrowserClient()
+  const client = getRequiredBrowserClient()
 
   if (!client) {
-    return buildPlaceholderResult({ id })
+    return buildErrorResult(null, "Supabase execution mode is not enabled.")
   }
 
-  const { error } = await client.from("executions").delete().eq("id", id)
+  const user = await getAuthenticatedBrowserUser(client)
+
+  if (!user) {
+    return buildErrorResult(null, "You must be signed in to delete an execution.")
+  }
+
+  const { error } = await client
+    .from("executions")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
 
   if (error) {
     return buildErrorResult(null, error.message)

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import AuthSessionControls from "@/components/auth/auth-session-controls"
 import ConnectWalletButton from "@/components/wallet/connect-wallet-button"
 
 type TopNavigationProps = {
@@ -47,6 +48,7 @@ export default function TopNavigation({ variant }: TopNavigationProps) {
             )
           })}
 
+          <AuthSessionControls compact variant={variant} />
           {variant === "dashboard" ? <ConnectWalletButton compact /> : null}
         </nav>
       </div>

@@ -13,14 +13,18 @@ export type DbExecutionStatus = "success" | "failed" | "pending"
 
 export interface StrategyRecord {
   id: string
-  wallet_address: string
+  user_id: string
   token_name: string
   token_symbol: string
+  token_address: string
   chain: string
+  chain_id: number
   sell_percentage: number
   take_profit_price: number | null
   stop_loss_price: number | null
+  trigger_enabled: boolean
   slippage: number
+  notes: string | null
   status: DbStrategyStatus
   created_at: string
   updated_at: string
@@ -28,28 +32,36 @@ export interface StrategyRecord {
 
 export interface StrategyInsert {
   id?: string
-  wallet_address: string
+  user_id?: string
   token_name: string
   token_symbol: string
+  token_address?: string
   chain: string
+  chain_id: number
   sell_percentage: number
   take_profit_price?: number | null
   stop_loss_price?: number | null
+  trigger_enabled?: boolean
   slippage: number
+  notes?: string | null
   status?: DbStrategyStatus
   created_at?: string
   updated_at?: string
 }
 
 export interface StrategyUpdate {
-  wallet_address?: string
+  user_id?: string
   token_name?: string
   token_symbol?: string
+  token_address?: string
   chain?: string
+  chain_id?: number
   sell_percentage?: number
   take_profit_price?: number | null
   stop_loss_price?: number | null
+  trigger_enabled?: boolean
   slippage?: number
+  notes?: string | null
   status?: DbStrategyStatus
   created_at?: string
   updated_at?: string
@@ -57,8 +69,8 @@ export interface StrategyUpdate {
 
 export interface ExecutionRecord {
   id: string
-  strategy_id: string
-  wallet_address: string
+  user_id: string
+  strategy_id: string | null
   token_symbol: string
   trigger_type: DbExecutionTriggerType
   amount_sold: number | null
@@ -67,12 +79,13 @@ export interface ExecutionRecord {
   error_message: string | null
   executed_at: string
   created_at: string
+  updated_at: string
 }
 
 export interface ExecutionInsert {
   id?: string
-  strategy_id: string
-  wallet_address: string
+  user_id?: string
+  strategy_id?: string | null
   token_symbol: string
   trigger_type: DbExecutionTriggerType
   amount_sold?: number | null
@@ -81,11 +94,12 @@ export interface ExecutionInsert {
   error_message?: string | null
   executed_at?: string
   created_at?: string
+  updated_at?: string
 }
 
 export interface ExecutionUpdate {
   strategy_id?: string
-  wallet_address?: string
+  user_id?: string
   token_symbol?: string
   trigger_type?: DbExecutionTriggerType
   amount_sold?: number | null
@@ -94,4 +108,5 @@ export interface ExecutionUpdate {
   error_message?: string | null
   executed_at?: string
   created_at?: string
+  updated_at?: string
 }

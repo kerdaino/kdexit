@@ -1,18 +1,58 @@
-import { listStrategies } from "@/lib/data"
-import { jsonError, jsonNotImplemented, jsonSuccess, jsonValidationError } from "@/lib/api/http"
+import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
+import { requireRouteUser, withOwnedInsert } from "@/lib/api/route-auth"
 import { validateStrategyCreatePayload } from "@/lib/api/validation/strategies"
+import type { StrategyCreateInput } from "@/lib/api/contracts"
+import type { StrategyInsert } from "@/types/database-records"
 
-export async function GET() {
-  const result = await listStrategies()
-
-  if (result.error) {
-    return jsonError("strategy_list_failed", result.error, { status: 500 })
+function getDataErrorResponse(code: string, message: string) {
+  if (message.includes("must be signed in")) {
+    return jsonError(code, message, { status: 401 })
   }
 
-  return jsonSuccess(result.data, {
+  if (message.includes("not enabled")) {
+    return jsonError(code, message, { status: 503 })
+  }
+
+  return jsonError(code, message, { status: 500 })
+}
+
+function toStrategyInsert(input: StrategyCreateInput): StrategyInsert {
+  return {
+    token_name: input.tokenName,
+    token_symbol: input.tokenSymbol,
+    token_address: input.tokenAddress ?? "",
+    chain: input.chain,
+    chain_id: input.chainId,
+    sell_percentage: input.sellPercentage,
+    take_profit_price: input.takeProfitPrice ?? null,
+    stop_loss_price: input.stopLossPrice ?? null,
+    trigger_enabled: input.triggerEnabled ?? true,
+    slippage: input.slippage ?? 1,
+    notes: input.notes ?? null,
+    status: input.status ?? "active",
+  }
+}
+
+export async function GET() {
+  const auth = await requireRouteUser()
+
+  if (!auth.ok) {
+    return auth.response
+  }
+
+  const { data, error } = await auth.supabase
+    .from("strategies")
+    .select("*")
+    .eq("user_id", auth.user.id)
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    return getDataErrorResponse("strategy_list_failed", error.message)
+  }
+
+  return jsonSuccess(data, {
     meta: {
       resource: "strategies",
-      isPlaceholderData: result.isPlaceholder,
     },
   })
 }
@@ -28,5 +68,28 @@ export async function POST(request: Request) {
     )
   }
 
-  return jsonNotImplemented("Strategy creation")
+  const auth = await requireRouteUser()
+
+  if (!auth.ok) {
+    return auth.response
+  }
+
+  const insertPayload = withOwnedInsert(auth.user, toStrategyInsert(validation.data))
+
+  const { data, error } = await auth.supabase
+    .from("strategies")
+    .insert(insertPayload as never)
+    .select()
+    .single()
+
+  if (error || !data) {
+    return getDataErrorResponse("strategy_create_failed", error?.message ?? "Failed to create strategy.")
+  }
+
+  return jsonSuccess(data, {
+    status: 201,
+    meta: {
+      resource: "strategy",
+    },
+  })
 }

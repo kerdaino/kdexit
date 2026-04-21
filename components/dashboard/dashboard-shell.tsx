@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import AccountStatusCard from "@/components/dashboard/account-status-card"
 import ActionFeedback from "@/components/shared/action-feedback"
 import type {
   DashboardSection,
@@ -125,6 +126,10 @@ export default function DashboardShell({
                 The dashboard keeps the current experience intact while routing
                 persistence through the configured data mode.
               </p>
+            </div>
+
+            <div className="mt-4">
+              <AccountStatusCard />
             </div>
           </div>
         </aside>
