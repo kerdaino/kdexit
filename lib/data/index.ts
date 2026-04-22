@@ -10,6 +10,13 @@ export {
   isSupabaseStrategyExecutionMode,
 } from "@/lib/data/config"
 export {
+  createWalletLink,
+  deleteWalletLink,
+  getWalletLink,
+  listWalletLinks,
+  updateWalletLink,
+} from "@/lib/data/wallet-links"
+export {
   createStrategy,
   deleteStrategy,
   getStrategy,

@@ -8,3 +8,8 @@ export type {
   StrategyCreateInput,
   StrategyUpdateInput,
 } from "@/lib/api/schemas/strategy"
+export type {
+  WalletLinkApiModel,
+  WalletLinkCreateInput,
+  WalletLinkUpdateInput,
+} from "@/lib/api/schemas/wallet-link"

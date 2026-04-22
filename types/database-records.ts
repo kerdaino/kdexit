@@ -11,6 +11,41 @@ export type DbExecutionTriggerType =
 
 export type DbExecutionStatus = "success" | "failed" | "pending"
 
+export interface WalletLinkRecord {
+  id: string
+  user_id: string
+  wallet_address: string
+  chain_id: number
+  connector_name: string | null
+  label: string | null
+  is_primary: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WalletLinkInsert {
+  id?: string
+  user_id?: string
+  wallet_address: string
+  chain_id: number
+  connector_name?: string | null
+  label?: string | null
+  is_primary?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface WalletLinkUpdate {
+  user_id?: string
+  wallet_address?: string
+  chain_id?: number
+  connector_name?: string | null
+  label?: string | null
+  is_primary?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
 export interface StrategyRecord {
   id: string
   user_id: string

@@ -16,6 +16,9 @@ import type {
   StrategyInsert,
   StrategyRecord,
   StrategyUpdate,
+  WalletLinkInsert,
+  WalletLinkRecord,
+  WalletLinkUpdate,
 } from "@/types/database-records"
 
 type ProfileRecord = {
@@ -48,6 +51,7 @@ export type Database = {
   public: {
     Tables: {
       profiles: TableDefinition<ProfileRecord, ProfileInsert, ProfileUpdate>
+      wallet_links: TableDefinition<WalletLinkRecord, WalletLinkInsert, WalletLinkUpdate>
       executions: TableDefinition<ExecutionRecord, ExecutionInsert, ExecutionUpdate>
       strategies: TableDefinition<StrategyRecord, StrategyInsert, StrategyUpdate>
     }

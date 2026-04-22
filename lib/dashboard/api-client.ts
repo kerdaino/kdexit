@@ -4,6 +4,9 @@ import type {
   StrategyInsert,
   StrategyRecord,
   StrategyUpdate,
+  WalletLinkInsert,
+  WalletLinkRecord,
+  WalletLinkUpdate,
 } from "@/types/database-records"
 
 type ApiSuccessResponse<T> = {
@@ -141,4 +144,57 @@ export async function createExecutionFromApi(input: ExecutionInsert) {
   })
 
   return parseApiResponse<ExecutionRecord>(response)
+}
+
+export async function listWalletLinksFromApi() {
+  const response = await fetch("/api/wallet-links", {
+    credentials: "same-origin",
+  })
+
+  return parseApiResponse<WalletLinkRecord[]>(response)
+}
+
+export async function createWalletLinkFromApi(input: WalletLinkInsert) {
+  const response = await fetch("/api/wallet-links", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      walletAddress: input.wallet_address,
+      chainId: input.chain_id,
+      connectorName: input.connector_name ?? undefined,
+      label: input.label ?? undefined,
+      isPrimary: input.is_primary ?? false,
+    }),
+  })
+
+  return parseApiResponse<WalletLinkRecord>(response)
+}
+
+export async function updateWalletLinkFromApi(id: string, updates: WalletLinkUpdate) {
+  const response = await fetch(`/api/wallet-links/${id}`, {
+    method: "PATCH",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      label: updates.label,
+      connectorName: updates.connector_name,
+      isPrimary: updates.is_primary,
+    }),
+  })
+
+  return parseApiResponse<WalletLinkRecord>(response)
+}
+
+export async function deleteWalletLinkFromApi(id: string) {
+  const response = await fetch(`/api/wallet-links/${id}`, {
+    method: "DELETE",
+    credentials: "same-origin",
+  })
+
+  return parseApiResponse<{ id: string }>(response)
 }

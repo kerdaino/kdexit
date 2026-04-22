@@ -1,31 +1,45 @@
 import { getPublicAppUrl } from "@/lib/site/url"
 
-const WALLETCONNECT_PROJECT_ID_ENV = "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID"
+export const WALLETCONNECT_PROJECT_ID_ENV = "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID"
 
-function readEnvValue(name: typeof WALLETCONNECT_PROJECT_ID_ENV) {
-  return process.env[name]
+function readWalletConnectProjectId() {
+  return process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() ?? ""
 }
 
-export function hasWalletConnectProjectId() {
-  return Boolean(readEnvValue(WALLETCONNECT_PROJECT_ID_ENV))
+export type WalletEnvironment = {
+  disabledReason: string | null
+  isWalletConnectConfigured: boolean
+  projectId: string | null
 }
 
-export function getWalletConnectProjectId() {
-  const value = readEnvValue(WALLETCONNECT_PROJECT_ID_ENV)
+function isValidWalletConnectProjectId(projectId: string) {
+  return /^[a-fA-F0-9]{32}$/.test(projectId)
+}
 
-  if (!value) {
-    throw new Error(`Missing required wallet environment variable: ${WALLETCONNECT_PROJECT_ID_ENV}`)
+export function getWalletEnvironment(): WalletEnvironment {
+  const projectId = readWalletConnectProjectId()
+
+  if (!projectId) {
+    return {
+      disabledReason: `${WALLETCONNECT_PROJECT_ID_ENV} is not configured yet. Wallet connection is disabled for now.`,
+      isWalletConnectConfigured: false,
+      projectId: null,
+    }
   }
 
-  return value
-}
-
-export function getWalletIntegrationDisabledReason() {
-  if (!hasWalletConnectProjectId()) {
-    return `${WALLETCONNECT_PROJECT_ID_ENV} is not configured yet. Wallet connection is disabled for now.`
+  if (!isValidWalletConnectProjectId(projectId)) {
+    return {
+      disabledReason: `${WALLETCONNECT_PROJECT_ID_ENV} is invalid. Wallet connection is disabled until the WalletConnect project ID is corrected.`,
+      isWalletConnectConfigured: false,
+      projectId: null,
+    }
   }
 
-  return null
+  return {
+    disabledReason: null,
+    isWalletConnectConfigured: true,
+    projectId,
+  }
 }
 
 export function getWeb3AppUrl() {
