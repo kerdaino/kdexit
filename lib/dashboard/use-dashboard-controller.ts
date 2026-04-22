@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { getStrategyExecutionDataMode } from "@/lib/data"
 import {
   createDashboardExecution,
+  listDashboardExecutionAttempts,
   createDashboardStrategy,
   deleteDashboardStrategy,
   listDashboardExecutions,
@@ -18,6 +19,7 @@ import {
   generateClientId,
 } from "@/lib/dashboard/utils"
 import type { Execution, Strategy } from "@/types/strategy"
+import type { ExecutionAttempt } from "@/types/automation"
 
 export type FeedbackState = {
   message: string
@@ -56,6 +58,7 @@ export const dashboardSections: Array<{
 export function useDashboardController() {
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [executions, setExecutions] = useState<Execution[]>([])
+  const [executionAttempts, setExecutionAttempts] = useState<ExecutionAttempt[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingStrategy, setEditingStrategy] = useState<Strategy | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -70,9 +73,10 @@ export function useDashboardController() {
 
     async function hydrateDashboard() {
       try {
-        const [loadedStrategies, loadedExecutions] = await Promise.all([
+        const [loadedStrategies, loadedExecutions, loadedExecutionAttempts] = await Promise.all([
           listDashboardStrategies(),
           listDashboardExecutions(),
+          listDashboardExecutionAttempts(),
         ])
 
         if (!isMounted) {
@@ -81,6 +85,7 @@ export function useDashboardController() {
 
         setStrategies(loadedStrategies)
         setExecutions(loadedExecutions)
+        setExecutionAttempts(loadedExecutionAttempts)
       } finally {
         if (isMounted) {
           setIsHydrated(true)
@@ -115,6 +120,7 @@ export function useDashboardController() {
     [strategies]
   )
   const recentExecutions = executions.slice(0, 4)
+  const recentExecutionAttempts = executionAttempts.slice(0, 4)
   const currentDataMode = getStrategyExecutionDataMode()
 
   async function addExecution(
@@ -345,6 +351,7 @@ export function useDashboardController() {
     currentDataMode,
     editingStrategy,
     executions,
+    executionAttempts,
     feedback,
     handleAddStrategy,
     handleCloseForm,
@@ -358,6 +365,7 @@ export function useDashboardController() {
     pausedStrategies,
     pendingStrategyActionById,
     recentExecutions,
+    recentExecutionAttempts,
     setActiveSection,
     showForm,
     strategies,

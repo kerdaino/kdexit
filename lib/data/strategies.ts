@@ -7,6 +7,7 @@ import {
   type DataAccessResult,
 } from "@/lib/data/shared"
 import type {
+  DbStrategyEvaluationState,
   StrategyInsert,
   StrategyRecord,
   StrategyUpdate,
@@ -177,4 +178,34 @@ export async function resumeStrategy(
   id: string
 ): Promise<DataAccessResult<StrategyRecord | null>> {
   return updateStrategy(id, { status: "active", trigger_enabled: true })
+}
+
+type StrategyEvaluationTimestamps = {
+  lastEvaluatedAt?: string | null
+  nextEvaluationAt?: string | null
+}
+
+export async function updateStrategyEvaluationState(
+  id: string,
+  evaluationState: DbStrategyEvaluationState,
+  timestamps: StrategyEvaluationTimestamps = {}
+): Promise<DataAccessResult<StrategyRecord | null>> {
+  return updateStrategy(id, {
+    evaluation_state: evaluationState,
+    last_evaluated_at:
+      timestamps.lastEvaluatedAt === undefined ? undefined : timestamps.lastEvaluatedAt,
+    next_evaluation_at:
+      timestamps.nextEvaluationAt === undefined ? undefined : timestamps.nextEvaluationAt,
+  })
+}
+
+export async function recordStrategyEvaluation(
+  id: string,
+  timestamps: StrategyEvaluationTimestamps = {}
+): Promise<DataAccessResult<StrategyRecord | null>> {
+  return updateStrategy(id, {
+    last_evaluated_at: timestamps.lastEvaluatedAt ?? getIsoTimestamp(),
+    next_evaluation_at:
+      timestamps.nextEvaluationAt === undefined ? undefined : timestamps.nextEvaluationAt,
+  })
 }

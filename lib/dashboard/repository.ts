@@ -2,6 +2,7 @@ import {
   createExecution,
   createStrategy,
   deleteStrategy,
+  listExecutionAttempts,
   listExecutions,
   listStrategies,
   pauseStrategy,
@@ -10,11 +11,13 @@ import {
 } from "@/lib/data"
 import { getStrategyChainEntryByLabel } from "@/lib/web3/chains"
 import type {
+  ExecutionAttemptRecord,
   ExecutionInsert,
   ExecutionRecord,
   StrategyInsert,
   StrategyRecord,
 } from "@/types/database-records"
+import { toExecutionAttempt, type ExecutionAttempt } from "@/types/automation"
 import type { Execution, Strategy, TriggerType } from "@/types/strategy"
 
 type DashboardExecutionInput = Omit<Execution, "id" | "executedAt"> & {
@@ -40,6 +43,10 @@ export function toDashboardStrategy(record: StrategyRecord): Strategy {
     slippage: record.slippage,
     notes: record.notes ?? undefined,
     status: record.status,
+    evaluationState: record.evaluation_state,
+    lastEvaluatedAt: record.last_evaluated_at ?? undefined,
+    nextEvaluationAt: record.next_evaluation_at ?? undefined,
+    simulationMode: record.simulation_mode,
     createdAt: record.created_at,
   }
 }
@@ -87,6 +94,12 @@ export function toDashboardExecution(record: ExecutionRecord): Execution {
     status: record.status,
     executedAt: record.executed_at,
   }
+}
+
+export function toDashboardExecutionAttempt(
+  record: ExecutionAttemptRecord
+): ExecutionAttempt {
+  return toExecutionAttempt(record)
 }
 
 export function toExecutionInsert(input: DashboardExecutionInput): ExecutionInsert {
@@ -157,6 +170,21 @@ export async function listDashboardExecutions() {
     return result.data.map(toDashboardExecution)
   } catch (error) {
     console.error("Failed to load executions:", error)
+    return []
+  }
+}
+
+export async function listDashboardExecutionAttempts() {
+  try {
+    const result = await listExecutionAttempts()
+
+    if (result.error) {
+      throw new Error(result.error)
+    }
+
+    return result.data.map(toDashboardExecutionAttempt)
+  } catch (error) {
+    console.error("Failed to load execution attempts:", error)
     return []
   }
 }

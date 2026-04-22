@@ -1,15 +1,19 @@
 import ExecutionHistory from "@/components/dashboard/execution-history"
+import SimulationAttemptHistory from "@/components/dashboard/simulation-attempt-history"
+import type { ExecutionAttempt } from "@/types/automation"
 import type { Execution } from "@/types/strategy"
 
 type ActivityHistoryPanelProps = {
   description: string
   executions: Execution[]
+  executionAttempts: ExecutionAttempt[]
   title: string
 }
 
 export default function ActivityHistoryPanel({
   description,
   executions,
+  executionAttempts,
   title,
 }: ActivityHistoryPanelProps) {
   return (
@@ -24,7 +28,10 @@ export default function ActivityHistoryPanel({
         </p>
       </div>
 
-      <ExecutionHistory executions={executions} />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ExecutionHistory executions={executions} />
+        <SimulationAttemptHistory attempts={executionAttempts} />
+      </div>
     </div>
   )
 }

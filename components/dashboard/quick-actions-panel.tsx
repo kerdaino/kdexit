@@ -3,6 +3,7 @@ type QuickActionsPanelProps = {
   currentDataMode: string
   pausedStrategies: number
   recentExecutionsCount: number
+  recentExecutionAttemptsCount: number
   showForm: boolean
   onCreateStrategy: () => void
   onManageStrategies: () => void
@@ -15,6 +16,7 @@ export default function QuickActionsPanel({
   currentDataMode,
   pausedStrategies,
   recentExecutionsCount,
+  recentExecutionAttemptsCount,
   showForm,
   onCreateStrategy,
   onManageStrategies,
@@ -32,7 +34,8 @@ export default function QuickActionsPanel({
         </h2>
         <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400">
           Jump into strategy creation, review current safeguards, or scan the
-          latest execution events without leaving the dashboard.
+          latest strategy activity and watcher simulation events without leaving
+          the dashboard.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -89,7 +92,7 @@ export default function QuickActionsPanel({
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm text-gray-400">Recent Activity</p>
             <p className="mt-2 text-lg font-semibold text-white">
-              {recentExecutionsCount} recent events
+              {recentExecutionsCount} strategy / {recentExecutionAttemptsCount} watcher
             </p>
           </div>
         </div>

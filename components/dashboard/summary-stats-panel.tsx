@@ -4,6 +4,7 @@ import WalletStatusCard from "@/components/dashboard/wallet-status-card"
 type SummaryStatsPanelProps = {
   activeStrategies: number
   executionsCount: number
+  executionAttemptsCount: number
   pausedStrategies: number
   totalStrategies: number
 }
@@ -11,16 +12,18 @@ type SummaryStatsPanelProps = {
 export default function SummaryStatsPanel({
   activeStrategies,
   executionsCount,
+  executionAttemptsCount,
   pausedStrategies,
   totalStrategies,
 }: SummaryStatsPanelProps) {
   return (
-    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-6">
       <WalletStatusCard />
       <StatsCard label="Total Strategies" value={totalStrategies} />
       <StatsCard label="Active Strategies" value={activeStrategies} />
       <StatsCard label="Paused Strategies" value={pausedStrategies} />
-      <StatsCard label="Executions" value={executionsCount} />
+      <StatsCard label="Strategy Activity" value={executionsCount} />
+      <StatsCard label="Watcher Sims" value={executionAttemptsCount} />
     </div>
   )
 }

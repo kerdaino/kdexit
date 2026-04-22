@@ -1,4 +1,5 @@
 export type DbStrategyStatus = "active" | "paused" | "triggered" | "completed"
+export type DbStrategyEvaluationState = "idle" | "ready" | "watching" | "blocked"
 
 export type DbExecutionTriggerType =
   | "take_profit"
@@ -10,6 +11,14 @@ export type DbExecutionTriggerType =
   | "strategy_deleted"
 
 export type DbExecutionStatus = "success" | "failed" | "pending"
+export type DbExecutionAttemptStatus =
+  | "queued"
+  | "evaluating"
+  | "simulated"
+  | "submitted"
+  | "confirmed"
+  | "failed"
+  | "aborted"
 
 export interface WalletLinkRecord {
   id: string
@@ -61,6 +70,10 @@ export interface StrategyRecord {
   slippage: number
   notes: string | null
   status: DbStrategyStatus
+  evaluation_state: DbStrategyEvaluationState
+  last_evaluated_at: string | null
+  next_evaluation_at: string | null
+  simulation_mode: boolean
   created_at: string
   updated_at: string
 }
@@ -80,6 +93,10 @@ export interface StrategyInsert {
   slippage: number
   notes?: string | null
   status?: DbStrategyStatus
+  evaluation_state?: DbStrategyEvaluationState
+  last_evaluated_at?: string | null
+  next_evaluation_at?: string | null
+  simulation_mode?: boolean
   created_at?: string
   updated_at?: string
 }
@@ -98,6 +115,54 @@ export interface StrategyUpdate {
   slippage?: number
   notes?: string | null
   status?: DbStrategyStatus
+  evaluation_state?: DbStrategyEvaluationState
+  last_evaluated_at?: string | null
+  next_evaluation_at?: string | null
+  simulation_mode?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ExecutionAttemptRecord {
+  id: string
+  user_id: string
+  strategy_id: string
+  trigger_type: DbExecutionTriggerType
+  status: DbExecutionAttemptStatus
+  simulation_mode: boolean
+  attempt_number: number
+  retry_count: number
+  failure_reason: string | null
+  transaction_hash: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ExecutionAttemptInsert {
+  id?: string
+  user_id?: string
+  strategy_id: string
+  trigger_type: DbExecutionTriggerType
+  status?: DbExecutionAttemptStatus
+  simulation_mode?: boolean
+  attempt_number?: number
+  retry_count?: number
+  failure_reason?: string | null
+  transaction_hash?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ExecutionAttemptUpdate {
+  user_id?: string
+  strategy_id?: string
+  trigger_type?: DbExecutionTriggerType
+  status?: DbExecutionAttemptStatus
+  simulation_mode?: boolean
+  attempt_number?: number
+  retry_count?: number
+  failure_reason?: string | null
+  transaction_hash?: string | null
   created_at?: string
   updated_at?: string
 }

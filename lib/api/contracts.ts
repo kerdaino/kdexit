@@ -8,6 +8,7 @@ export type {
   StrategyCreateInput,
   StrategyUpdateInput,
 } from "@/lib/api/schemas/strategy"
+export type { WatcherSimulationRequestInput } from "@/lib/api/schemas/watcher"
 export type {
   WalletLinkApiModel,
   WalletLinkCreateInput,

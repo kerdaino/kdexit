@@ -15,8 +15,8 @@ export default function ExecutionHistory({
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
       <SectionHeading
-        title="Execution History"
-        description="Recent activity from your strategies."
+        title="Strategy Activity History"
+        description="Create, update, pause, resume, and other strategy-level activity."
       />
 
       <div className="mt-6 space-y-4">
@@ -26,7 +26,7 @@ export default function ExecutionHistory({
               H
             </div>
             <p className="mt-4 text-base font-semibold text-white">
-              No execution activity yet
+              No strategy activity yet
             </p>
             <p className="mt-2 max-w-md text-sm leading-6 text-gray-400">
               When you create, update, pause, resume, or trigger a strategy,

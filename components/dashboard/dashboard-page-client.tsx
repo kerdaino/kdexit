@@ -20,6 +20,7 @@ export default function DashboardPageClient() {
     currentDataMode,
     editingStrategy,
     executions,
+    executionAttempts,
     feedback,
     handleAddStrategy,
     handleCloseForm,
@@ -33,6 +34,7 @@ export default function DashboardPageClient() {
     pausedStrategies,
     pendingStrategyActionById,
     recentExecutions,
+    recentExecutionAttempts,
     setActiveSection,
     showForm,
     strategies,
@@ -69,6 +71,7 @@ export default function DashboardPageClient() {
               <SummaryStatsPanel
                 activeStrategies={activeStrategies}
                 executionsCount={executions.length}
+                executionAttemptsCount={executionAttempts.length}
                 pausedStrategies={pausedStrategies}
                 totalStrategies={totalStrategies}
               />
@@ -77,6 +80,7 @@ export default function DashboardPageClient() {
                 currentDataMode={currentDataMode}
                 pausedStrategies={pausedStrategies}
                 recentExecutionsCount={recentExecutions.length}
+                recentExecutionAttemptsCount={recentExecutionAttempts.length}
                 showForm={showForm}
                 onCreateStrategy={handleOpenNewStrategy}
                 onManageStrategies={() => setActiveSection("strategies")}
@@ -84,9 +88,10 @@ export default function DashboardPageClient() {
                 onOpenSettings={() => setActiveSection("settings")}
               />
               <ActivityHistoryPanel
-                description="Track the latest create, update, pause, resume, and delete events at a glance."
+                description="Track the latest strategy activity and dry-run watcher simulation attempts at a glance."
                 executions={recentExecutions}
-                title="Latest execution activity"
+                executionAttempts={recentExecutionAttempts}
+                title="Latest dashboard activity"
               />
             </div>
           ) : null}
@@ -110,9 +115,10 @@ export default function DashboardPageClient() {
 
           {activeSection === "activity" ? (
             <ActivityHistoryPanel
-              description="Track every create, update, pause, resume, and delete event in one place to keep the workflow easy to audit."
+              description="Track strategy activity history and watcher simulation attempts in one place with clear success, pending, and failed states."
               executions={executions}
-              title="Review the execution timeline"
+              executionAttempts={executionAttempts}
+              title="Review activity and watcher simulations"
             />
           ) : null}
 

@@ -1,4 +1,13 @@
 export type StrategyStatus = "active" | "paused" | "triggered" | "completed"
+export type StrategyEvaluationState = "idle" | "ready" | "watching" | "blocked"
+export type ExecutionAttemptStatus =
+  | "queued"
+  | "evaluating"
+  | "simulated"
+  | "submitted"
+  | "confirmed"
+  | "failed"
+  | "aborted"
 
 export type TriggerType =
   | "take_profit"
@@ -23,6 +32,10 @@ export type Strategy = {
   slippage: number
   notes?: string
   status: StrategyStatus
+  evaluationState?: StrategyEvaluationState
+  lastEvaluatedAt?: string
+  nextEvaluationAt?: string
+  simulationMode?: boolean
   createdAt: string
 }
 
@@ -33,4 +46,18 @@ export type Execution = {
   amountSold: string
   status: "success" | "failed" | "pending"
   executedAt: string
+}
+
+export type ExecutionAttempt = {
+  id: string
+  strategyId: string
+  triggerType: TriggerType
+  status: ExecutionAttemptStatus
+  simulationMode: boolean
+  attemptNumber: number
+  retryCount: number
+  failureReason?: string
+  transactionHash?: string
+  createdAt: string
+  updatedAt: string
 }

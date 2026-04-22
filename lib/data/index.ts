@@ -1,4 +1,12 @@
 export {
+  createExecutionAttempt,
+  getExecutionAttempt,
+  listExecutionAttempts,
+  recordExecutionAttemptFailure,
+  updateExecutionAttempt,
+  updateExecutionAttemptStatus,
+} from "@/lib/data/execution-attempts"
+export {
   createExecution,
   deleteExecution,
   getExecution,
@@ -22,7 +30,9 @@ export {
   getStrategy,
   listStrategies,
   pauseStrategy,
+  recordStrategyEvaluation,
   resumeStrategy,
   updateStrategy,
+  updateStrategyEvaluationState,
 } from "@/lib/data/strategies"
 export type { DataAccessResult } from "@/lib/data/shared"

@@ -1,5 +1,6 @@
 import { getStrategyExecutionDataMode } from "@/lib/data"
 import {
+  listExecutionAttemptsFromApi,
   createExecutionFromApi,
   createStrategyFromApi,
   deleteStrategyFromApi,
@@ -11,11 +12,13 @@ import {
   createDashboardExecution as createDashboardExecutionFromRepository,
   createDashboardStrategy as createDashboardStrategyFromRepository,
   deleteDashboardStrategy as deleteDashboardStrategyFromRepository,
+  listDashboardExecutionAttempts as listDashboardExecutionAttemptsFromRepository,
   listDashboardExecutions as listDashboardExecutionsFromRepository,
   listDashboardStrategies as listDashboardStrategiesFromRepository,
   pauseDashboardStrategy as pauseDashboardStrategyFromRepository,
   resumeDashboardStrategy as resumeDashboardStrategyFromRepository,
   toDashboardExecution,
+  toDashboardExecutionAttempt,
   toDashboardStrategy,
   toExecutionInsert,
   toStrategyInsert,
@@ -85,6 +88,19 @@ export async function listDashboardExecutions() {
       return listExecutionsFromApi().then((records) => records.map(toDashboardExecution))
     case "client-repository":
       return listDashboardExecutionsFromRepository()
+  }
+}
+
+export async function listDashboardExecutionAttempts() {
+  const plan = getDashboardMutationPlan()
+
+  switch (plan.activeTransport) {
+    case "api-routes":
+      return listExecutionAttemptsFromApi().then((records) =>
+        records.map(toDashboardExecutionAttempt)
+      )
+    case "client-repository":
+      return listDashboardExecutionAttemptsFromRepository()
   }
 }
 

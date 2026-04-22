@@ -7,9 +7,14 @@ export type Json =
   | Json[]
 
 import type {
+  DbExecutionAttemptStatus,
   DbExecutionStatus,
   DbExecutionTriggerType,
+  DbStrategyEvaluationState,
   DbStrategyStatus,
+  ExecutionAttemptInsert,
+  ExecutionAttemptRecord,
+  ExecutionAttemptUpdate,
   ExecutionInsert,
   ExecutionRecord,
   ExecutionUpdate,
@@ -52,14 +57,21 @@ export type Database = {
     Tables: {
       profiles: TableDefinition<ProfileRecord, ProfileInsert, ProfileUpdate>
       wallet_links: TableDefinition<WalletLinkRecord, WalletLinkInsert, WalletLinkUpdate>
+      execution_attempts: TableDefinition<
+        ExecutionAttemptRecord,
+        ExecutionAttemptInsert,
+        ExecutionAttemptUpdate
+      >
       executions: TableDefinition<ExecutionRecord, ExecutionInsert, ExecutionUpdate>
       strategies: TableDefinition<StrategyRecord, StrategyInsert, StrategyUpdate>
     }
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: {
+      execution_attempt_status: DbExecutionAttemptStatus
       execution_status: DbExecutionStatus
       execution_trigger_type: DbExecutionTriggerType
+      strategy_evaluation_state: DbStrategyEvaluationState
       strategy_status: DbStrategyStatus
     }
     CompositeTypes: Record<string, never>

@@ -1,4 +1,5 @@
 import type {
+  ExecutionAttemptRecord,
   ExecutionInsert,
   ExecutionRecord,
   StrategyInsert,
@@ -144,6 +145,14 @@ export async function createExecutionFromApi(input: ExecutionInsert) {
   })
 
   return parseApiResponse<ExecutionRecord>(response)
+}
+
+export async function listExecutionAttemptsFromApi() {
+  const response = await fetch("/api/execution-attempts", {
+    credentials: "same-origin",
+  })
+
+  return parseApiResponse<ExecutionAttemptRecord[]>(response)
 }
 
 export async function listWalletLinksFromApi() {

@@ -1,4 +1,5 @@
 import type { Execution, Strategy, StrategyStatus, TriggerType } from "@/types/strategy"
+import type { ExecutionAttempt, ExecutionAttemptStatus } from "@/types/automation"
 import {
   getStrategyChainEntryByLabel,
   primaryKdexitChain,
@@ -93,5 +94,73 @@ export function formatTriggerLabel(triggerType: TriggerType) {
       return "Strategy Deleted"
     default:
       return triggerType
+  }
+}
+
+export function getExecutionAttemptOutcome(
+  status: ExecutionAttemptStatus
+): "success" | "pending" | "failed" {
+  switch (status) {
+    case "simulated":
+    case "confirmed":
+      return "success"
+    case "queued":
+    case "evaluating":
+    case "submitted":
+      return "pending"
+    case "failed":
+    case "aborted":
+      return "failed"
+    default:
+      return "pending"
+  }
+}
+
+export function getExecutionAttemptOutcomeClass(status: ExecutionAttempt["status"]) {
+  switch (getExecutionAttemptOutcome(status)) {
+    case "success":
+      return "text-emerald-400"
+    case "failed":
+      return "text-red-400"
+    case "pending":
+      return "text-yellow-400"
+    default:
+      return "text-gray-400"
+  }
+}
+
+export function formatExecutionAttemptStatus(status: ExecutionAttempt["status"]) {
+  switch (status) {
+    case "queued":
+      return "Queued"
+    case "evaluating":
+      return "Evaluating"
+    case "simulated":
+      return "Simulated Success"
+    case "submitted":
+      return "Submitted"
+    case "confirmed":
+      return "Confirmed"
+    case "failed":
+      return "Failed"
+    case "aborted":
+      return "Aborted"
+    default:
+      return status
+  }
+}
+
+export function getExecutionAttemptStatusBadgeClass(
+  status: ExecutionAttempt["status"]
+) {
+  switch (getExecutionAttemptOutcome(status)) {
+    case "success":
+      return "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+    case "failed":
+      return "border-red-500/20 bg-red-500/10 text-red-300"
+    case "pending":
+      return "border-yellow-500/20 bg-yellow-500/10 text-yellow-300"
+    default:
+      return "border-white/10 bg-white/5 text-gray-300"
   }
 }
