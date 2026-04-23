@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import DashboardPageClient from "@/components/dashboard/dashboard-page-client"
 import Footer from "@/components/shared/footer"
 import TopNavigation from "@/components/shared/top-navigation"
+import { getExecutionReadinessSnapshot } from "@/lib/config/execution-readiness"
 import { ensureProfileForUser } from "@/lib/profiles/bootstrap"
 import { hasSupabaseEnv } from "@/lib/supabase/env"
 import { getSupabaseUser } from "@/lib/supabase/server"
@@ -90,7 +91,7 @@ export default async function DashboardPage() {
     )
   }
 
-  return (
-    <DashboardPageClient />
-  )
+  const executionReadiness = getExecutionReadinessSnapshot()
+
+  return <DashboardPageClient executionReadiness={executionReadiness} />
 }

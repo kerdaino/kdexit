@@ -1,7 +1,10 @@
+import ExecutionReadinessCard from "@/components/dashboard/execution-readiness-card"
 import WalletStatusSection from "@/components/wallet/wallet-status-section"
+import type { ExecutionReadinessSnapshot } from "@/types/execution-readiness"
 
 type SettingsPanelProps = {
   currentDataMode: string
+  executionReadiness: ExecutionReadinessSnapshot
 }
 
 const plannedSettingsSections = [
@@ -37,7 +40,10 @@ const plannedSettingsSections = [
   },
 ] as const
 
-export default function SettingsPanel({ currentDataMode }: SettingsPanelProps) {
+export default function SettingsPanel({
+  currentDataMode,
+  executionReadiness,
+}: SettingsPanelProps) {
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-white/10 bg-black/20 p-5 sm:p-6">
@@ -48,8 +54,8 @@ export default function SettingsPanel({ currentDataMode }: SettingsPanelProps) {
           Workspace and data preferences
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400">
-          This section keeps configuration readable without changing the rest of
-          the dashboard flow.
+          This section keeps execution-readiness and configuration readable without
+          overstating what the product does today.
         </p>
       </div>
 
@@ -68,15 +74,33 @@ export default function SettingsPanel({ currentDataMode }: SettingsPanelProps) {
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
           <p className="text-sm text-gray-400">Current Workspace State</p>
           <p className="mt-3 text-2xl font-semibold text-white">
-            Dashboard Operational
+            {executionReadiness.label}
           </p>
           <p className="mt-3 text-sm leading-6 text-gray-400">
-            Existing features remain active: strategy form, management actions,
-            execution history, and wallet-aware dashboard updates. Live automated
-            trade execution is still intentionally out of scope for this release.
+            {executionReadiness.description}
           </p>
         </div>
       </div>
+
+      <div className="rounded-3xl border border-white/10 bg-black/20 p-5 sm:p-6">
+        <p className="text-sm text-gray-400">Current Product Boundaries</p>
+        <div className="mt-4 grid gap-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-gray-300">
+            Wallet linking exists and is visible below, but it is account and session context only.
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-gray-300">
+            Watcher simulation exists as a dry-run workflow and history surface, not as live trade execution.
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-gray-300">
+            Contract readiness is scaffolded as execution-readiness state. It does not mean contracts are actively moving funds.
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-gray-300">
+            Live execution is disabled, and KDEXIT does not currently move funds or execute trades from this app.
+          </div>
+        </div>
+      </div>
+
+      <ExecutionReadinessCard readiness={executionReadiness} />
 
       <WalletStatusSection />
 

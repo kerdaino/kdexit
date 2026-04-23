@@ -46,11 +46,31 @@ Optional data mode variable:
 
 - `NEXT_PUBLIC_STRATEGY_DATA_MODE`
 
+Phase 5 execution-readiness flags:
+
+- `NEXT_PUBLIC_KDEXIT_DASHBOARD_BETA_MODE`
+- `NEXT_PUBLIC_KDEXIT_WALLET_LINKED_BETA_MODE`
+- `NEXT_PUBLIC_KDEXIT_CONTRACT_READINESS_MODE`
+- `NEXT_PUBLIC_KDEXIT_LIVE_EXECUTION_MODE`
+- `KDEXIT_ENABLE_WATCHER_SIMULATION`
+- `KDEXIT_LIVE_EXECUTION_KILL_SWITCH`
+
 If `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is missing, wallet connection UI stays visible in a disabled state instead of crashing the app.
 
 For Vercel or any production deployment, `NEXT_PUBLIC_APP_URL` should be set to your final public origin, for example `https://app.kdexit.com`.
 
 `NEXT_PUBLIC_STRATEGY_DATA_MODE` defaults to `localStorage`. For the authenticated Supabase-backed dashboard flow, set it to `supabase`. Keep `localStorage` only for explicit local/dev fallback use.
+
+Execution-readiness safe defaults:
+
+- dashboard beta mode defaults to disabled
+- wallet-linked beta mode defaults to disabled
+- contract readiness defaults to disabled
+- live execution defaults to disabled
+- watcher simulation defaults to disabled unless explicitly enabled
+- the global live execution kill switch defaults to enabled
+
+These flags do not add or enable trade execution, token approvals, swaps, or contract writes. They are only a centralized readiness and gating layer for future Phase 5 work.
 
 ## Learn More
 

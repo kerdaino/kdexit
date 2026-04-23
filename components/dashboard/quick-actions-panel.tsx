@@ -1,6 +1,9 @@
+import type { ExecutionReadinessSnapshot } from "@/types/execution-readiness"
+
 type QuickActionsPanelProps = {
   activeStrategies: number
   currentDataMode: string
+  executionReadiness: ExecutionReadinessSnapshot
   pausedStrategies: number
   recentExecutionsCount: number
   recentExecutionAttemptsCount: number
@@ -14,6 +17,7 @@ type QuickActionsPanelProps = {
 export default function QuickActionsPanel({
   activeStrategies,
   currentDataMode,
+  executionReadiness,
   pausedStrategies,
   recentExecutionsCount,
   recentExecutionAttemptsCount,
@@ -33,9 +37,8 @@ export default function QuickActionsPanel({
           Keep your exit workflow moving
         </h2>
         <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400">
-          Jump into strategy creation, review current safeguards, or scan the
-          latest strategy activity and watcher simulation events without leaving
-          the dashboard.
+          Create and manage strategies, review execution-readiness boundaries, and scan
+          wallet-linking and watcher simulation state without leaving the dashboard.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -70,6 +73,11 @@ export default function QuickActionsPanel({
         <p className="text-xs uppercase tracking-[0.22em] text-gray-500">
           Workspace Summary
         </p>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400">
+          KDEXIT currently surfaces wallet linking, dry-run watcher simulation, and
+          execution-readiness status. Live execution stays disabled, and the app does not
+          move funds or execute trades today.
+        </p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm text-gray-400">Primary Focus</p>
@@ -90,10 +98,28 @@ export default function QuickActionsPanel({
             </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-sm text-gray-400">Execution State</p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {executionReadiness.label}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm text-gray-400">Recent Activity</p>
             <p className="mt-2 text-lg font-semibold text-white">
               {recentExecutionsCount} strategy / {recentExecutionAttemptsCount} watcher
             </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-gray-300">
+            Wallet linking exists for account and session context. It does not by itself enable trading.
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-gray-300">
+            Watcher simulation exists for dry-run monitoring and attempt history only.
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-gray-300">
+            Contract readiness is scaffolded as product state. Live execution remains disabled.
           </div>
         </div>
       </div>

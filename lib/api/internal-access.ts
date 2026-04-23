@@ -1,4 +1,5 @@
 import { jsonError } from "@/lib/api/http"
+import { isWatcherSimulationModeEnabled } from "@/lib/config/execution-readiness"
 import { requireRouteUser } from "@/lib/api/route-auth"
 
 function parseCsvList(value: string | undefined) {
@@ -13,13 +14,7 @@ function parseCsvList(value: string | undefined) {
 }
 
 function isInternalWatcherSimulationEnabled() {
-  const rawValue = process.env.KDEXIT_ENABLE_INTERNAL_WATCHER_SIMULATION?.trim()
-
-  if (process.env.NODE_ENV === "development") {
-    return rawValue !== "false"
-  }
-
-  return rawValue === "true"
+  return isWatcherSimulationModeEnabled()
 }
 
 function isUserAllowlisted(user: { id: string; email?: string | null }) {

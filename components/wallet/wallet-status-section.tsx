@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import ActionFeedback from "@/components/shared/action-feedback"
 import ConnectWalletButton from "@/components/wallet/connect-wallet-button"
 import { useLinkedWallets } from "@/lib/wallet/use-linked-wallets"
@@ -40,19 +40,14 @@ export default function WalletStatusSection() {
 
   const normalizedConnectedAddress = address?.toLowerCase() ?? null
 
-  const activeLinkedWallet = useMemo(() => {
-    if (!normalizedConnectedAddress || !chain?.id) {
-      return null
-    }
-
-    return (
-      linkedWallets.find(
-        (wallet) =>
-          wallet.wallet_address.toLowerCase() === normalizedConnectedAddress &&
-          wallet.chain_id === chain.id
-      ) ?? null
-    )
-  }, [chain?.id, linkedWallets, normalizedConnectedAddress])
+  const activeLinkedWallet =
+    normalizedConnectedAddress && chain?.id
+      ? linkedWallets.find(
+          (wallet) =>
+            wallet.wallet_address.toLowerCase() === normalizedConnectedAddress &&
+            wallet.chain_id === chain.id
+        ) ?? null
+      : null
 
   useEffect(() => {
     if (!feedback) return

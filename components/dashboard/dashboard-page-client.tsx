@@ -12,8 +12,15 @@ import {
   dashboardSections,
   useDashboardController,
 } from "@/lib/dashboard/use-dashboard-controller"
+import type { ExecutionReadinessSnapshot } from "@/types/execution-readiness"
 
-export default function DashboardPageClient() {
+type DashboardPageClientProps = {
+  executionReadiness: ExecutionReadinessSnapshot
+}
+
+export default function DashboardPageClient({
+  executionReadiness,
+}: DashboardPageClientProps) {
   const {
     activeSection,
     activeStrategies,
@@ -60,6 +67,7 @@ export default function DashboardPageClient() {
         <DashboardShell
           activeSection={activeSection}
           currentDataMode={currentDataMode}
+          executionReadiness={executionReadiness}
           feedback={feedback}
           onNewStrategy={handleOpenNewStrategy}
           onSelectSection={setActiveSection}
@@ -78,6 +86,7 @@ export default function DashboardPageClient() {
               <QuickActionsPanel
                 activeStrategies={activeStrategies}
                 currentDataMode={currentDataMode}
+                executionReadiness={executionReadiness}
                 pausedStrategies={pausedStrategies}
                 recentExecutionsCount={recentExecutions.length}
                 recentExecutionAttemptsCount={recentExecutionAttempts.length}
@@ -88,7 +97,7 @@ export default function DashboardPageClient() {
                 onOpenSettings={() => setActiveSection("settings")}
               />
               <ActivityHistoryPanel
-                description="Track offchain strategy activity and dry-run watcher simulation attempts at a glance."
+                description="Track offchain strategy activity and dry-run watcher simulation attempts at a glance. These records do not indicate live trade execution or fund movement."
                 executions={recentExecutions}
                 executionAttempts={recentExecutionAttempts}
                 title="Latest dashboard activity"
@@ -115,7 +124,7 @@ export default function DashboardPageClient() {
 
           {activeSection === "activity" ? (
             <ActivityHistoryPanel
-              description="Track offchain strategy activity history and watcher simulation attempts in one place with clear success, pending, and failed states."
+              description="Track offchain strategy activity history and watcher simulation attempts in one place with clear success, pending, and failed states. KDEXIT does not currently execute live trades or move funds from this dashboard."
               executions={executions}
               executionAttempts={executionAttempts}
               title="Review activity and watcher simulations"
@@ -123,7 +132,10 @@ export default function DashboardPageClient() {
           ) : null}
 
           {activeSection === "settings" ? (
-            <SettingsPanel currentDataMode={currentDataMode} />
+            <SettingsPanel
+              currentDataMode={currentDataMode}
+              executionReadiness={executionReadiness}
+            />
           ) : null}
         </DashboardShell>
       </div>

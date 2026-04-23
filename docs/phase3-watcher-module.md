@@ -110,7 +110,8 @@ This keeps watcher logic independent from:
 - `/api/execution-attempts?mode=simulation` is the canonical read path for watcher simulation history
 - there is no public `/api/watcher/simulate` execution-style route
 - production requests return `404`
-- non-development environments must explicitly enable the route with `KDEXIT_ENABLE_INTERNAL_WATCHER_SIMULATION=true`
+- all environments must explicitly enable watcher simulation with `KDEXIT_ENABLE_WATCHER_SIMULATION=true`
+- `KDEXIT_ENABLE_INTERNAL_WATCHER_SIMULATION` remains a legacy fallback env name for compatibility
 - staging/preview access can be narrowed further with `KDEXIT_INTERNAL_ADMIN_USER_IDS` or `KDEXIT_INTERNAL_ADMIN_EMAILS`
 - simulation requires caller-supplied market observations
 - triggered simulations create `execution_attempts` rows with `simulation_mode = true`
@@ -118,6 +119,7 @@ This keeps watcher logic independent from:
 - no module here submits a transaction
 - no module here signs with a wallet
 - no module here calls onchain contracts
+- live execution remains disabled by default and separately guarded by centralized Phase 5 readiness flags
 
 ## Intended Next Step
 

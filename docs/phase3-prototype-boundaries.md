@@ -20,6 +20,15 @@ This repo now treats Phase 3 as a simulation-first automation prototype.
 
 All current watcher attempt reads and writes are scoped to `simulation_mode = true`.
 
+Phase 5 now adds centralized execution-readiness flags, but the safe default remains unchanged:
+
+- dashboard beta mode is off by default
+- wallet-linked beta mode is off by default
+- contract readiness mode is off by default
+- live execution mode is off by default
+- watcher simulation is off unless explicitly enabled
+- the live execution kill switch is on by default
+
 ## What Is Still Prototype-Only
 
 - Watcher runs depend on caller-supplied observations instead of live market feeds.
@@ -28,3 +37,4 @@ All current watcher attempt reads and writes are scoped to `simulation_mode = tr
 - Wallet connectivity is present for account and chain awareness, not trade execution.
 - There is no worker process, no onchain permission model, no execution contract integration, and no reconciliation against live transaction receipts.
 - Future live execution mode does not have an implementation path in this repo yet.
+- Centralized readiness flags do not change those boundaries by themselves.

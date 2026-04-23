@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { generateClientId } from "@/lib/dashboard/utils"
 import {
   getStrategyChainEntryByLabel,
@@ -165,43 +165,41 @@ function getInitialFormValues(editingStrategy?: Strategy | null): StrategyFormVa
 }
 
 export default function CreateStrategyForm({
+  editingStrategy,
+  ...props
+}: CreateStrategyFormProps) {
+  const formKey = editingStrategy?.id ?? "new-strategy"
+
+  return (
+    <CreateStrategyFormContent
+      key={formKey}
+      editingStrategy={editingStrategy}
+      {...props}
+    />
+  )
+}
+
+function CreateStrategyFormContent({
   onAddStrategy,
   onUpdateStrategy,
   onCancel,
   editingStrategy,
 }: CreateStrategyFormProps) {
-  const [tokenName, setTokenName] = useState("")
-  const [tokenSymbol, setTokenSymbol] = useState("")
-  const [tokenAddress, setTokenAddress] = useState("")
-  const [chain, setChain] = useState<string>(primaryKdexitChain.label)
-  const [chainId, setChainId] = useState(String(primaryKdexitChain.chain.id))
-  const [sellPercentage, setSellPercentage] = useState("")
-  const [takeProfitPrice, setTakeProfitPrice] = useState("")
-  const [stopLossPrice, setStopLossPrice] = useState("")
-  const [triggerEnabled, setTriggerEnabled] = useState(true)
-  const [slippage, setSlippage] = useState("1")
-  const [notes, setNotes] = useState("")
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
+  const initialValues = getInitialFormValues(editingStrategy)
+  const [tokenName, setTokenName] = useState(initialValues.tokenName)
+  const [tokenSymbol, setTokenSymbol] = useState(initialValues.tokenSymbol)
+  const [tokenAddress, setTokenAddress] = useState(initialValues.tokenAddress)
+  const [chain, setChain] = useState<string>(initialValues.chain)
+  const [chainId, setChainId] = useState(initialValues.chainId)
+  const [sellPercentage, setSellPercentage] = useState(initialValues.sellPercentage)
+  const [takeProfitPrice, setTakeProfitPrice] = useState(initialValues.takeProfitPrice)
+  const [stopLossPrice, setStopLossPrice] = useState(initialValues.stopLossPrice)
+  const [triggerEnabled, setTriggerEnabled] = useState(initialValues.triggerEnabled)
+  const [slippage, setSlippage] = useState(initialValues.slippage)
+  const [notes, setNotes] = useState(initialValues.notes)
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(hasAdvancedContent(editingStrategy))
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    const initialValues = getInitialFormValues(editingStrategy)
-
-    setTokenName(initialValues.tokenName)
-    setTokenSymbol(initialValues.tokenSymbol)
-    setTokenAddress(initialValues.tokenAddress)
-    setChain(initialValues.chain)
-    setChainId(initialValues.chainId)
-    setSellPercentage(initialValues.sellPercentage)
-    setTakeProfitPrice(initialValues.takeProfitPrice)
-    setStopLossPrice(initialValues.stopLossPrice)
-    setTriggerEnabled(initialValues.triggerEnabled)
-    setSlippage(initialValues.slippage)
-    setNotes(initialValues.notes)
-    setIsAdvancedOpen(hasAdvancedContent(editingStrategy))
-    setErrors({})
-  }, [editingStrategy])
 
   function handleChainChange(nextChain: string) {
     const chainEntry = getStrategyChainEntryByLabel(nextChain)

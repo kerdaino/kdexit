@@ -179,6 +179,12 @@ From the current codebase:
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_STRATEGY_DATA_MODE`
+- `NEXT_PUBLIC_KDEXIT_DASHBOARD_BETA_MODE`
+- `NEXT_PUBLIC_KDEXIT_WALLET_LINKED_BETA_MODE`
+- `NEXT_PUBLIC_KDEXIT_CONTRACT_READINESS_MODE`
+- `NEXT_PUBLIC_KDEXIT_LIVE_EXECUTION_MODE`
+- `KDEXIT_ENABLE_WATCHER_SIMULATION`
+- `KDEXIT_LIVE_EXECUTION_KILL_SWITCH`
 
 ### Launch Checks
 
@@ -188,6 +194,10 @@ From the current codebase:
 - `[Must]` Local, preview, and production environments are separated clearly.
 - `[Must]` `NEXT_PUBLIC_APP_URL` uses the final production domain.
 - `[Must]` `NEXT_PUBLIC_STRATEGY_DATA_MODE` matches the intended production persistence mode.
+- `[Must]` `NEXT_PUBLIC_KDEXIT_LIVE_EXECUTION_MODE` stays `false` until live execution is intentionally launched.
+- `[Must]` `NEXT_PUBLIC_KDEXIT_CONTRACT_READINESS_MODE` stays `false` until contract-readiness scaffolding is intentionally in use.
+- `[Must]` `KDEXIT_LIVE_EXECUTION_KILL_SWITCH` stays enabled by default and is only lowered through an explicit release decision.
+- `[Must]` `KDEXIT_ENABLE_WATCHER_SIMULATION` is only enabled intentionally for dry-run watcher exercises.
 - `[Should]` Add a startup validation checklist for preview and production environments.
 
 ## 7. Analytics And Monitoring

@@ -1,10 +1,12 @@
 import type { ReactNode } from "react"
 import AccountStatusCard from "@/components/dashboard/account-status-card"
+import ExecutionReadinessCard from "@/components/dashboard/execution-readiness-card"
 import ActionFeedback from "@/components/shared/action-feedback"
 import type {
   DashboardSection,
   FeedbackState,
 } from "@/lib/dashboard/use-dashboard-controller"
+import type { ExecutionReadinessSnapshot } from "@/types/execution-readiness"
 
 type DashboardSectionItem = {
   id: DashboardSection
@@ -15,6 +17,7 @@ type DashboardSectionItem = {
 type DashboardShellProps = {
   activeSection: DashboardSection
   currentDataMode: string
+  executionReadiness: ExecutionReadinessSnapshot
   feedback: FeedbackState | null
   onNewStrategy: () => void
   onSelectSection: (section: DashboardSection) => void
@@ -26,6 +29,7 @@ type DashboardShellProps = {
 export default function DashboardShell({
   activeSection,
   currentDataMode,
+  executionReadiness,
   feedback,
   onNewStrategy,
   onSelectSection,
@@ -126,6 +130,10 @@ export default function DashboardShell({
                 The dashboard keeps the current experience intact while routing
                 persistence through the configured data mode.
               </p>
+            </div>
+
+            <div className="mt-4">
+              <ExecutionReadinessCard readiness={executionReadiness} variant="compact" />
             </div>
 
             <div className="mt-4">
