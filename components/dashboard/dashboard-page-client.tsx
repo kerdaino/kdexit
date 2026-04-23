@@ -88,7 +88,7 @@ export default function DashboardPageClient() {
                 onOpenSettings={() => setActiveSection("settings")}
               />
               <ActivityHistoryPanel
-                description="Track the latest strategy activity and dry-run watcher simulation attempts at a glance."
+                description="Track offchain strategy activity and dry-run watcher simulation attempts at a glance."
                 executions={recentExecutions}
                 executionAttempts={recentExecutionAttempts}
                 title="Latest dashboard activity"
@@ -115,7 +115,7 @@ export default function DashboardPageClient() {
 
           {activeSection === "activity" ? (
             <ActivityHistoryPanel
-              description="Track strategy activity history and watcher simulation attempts in one place with clear success, pending, and failed states."
+              description="Track offchain strategy activity history and watcher simulation attempts in one place with clear success, pending, and failed states."
               executions={executions}
               executionAttempts={executionAttempts}
               title="Review activity and watcher simulations"

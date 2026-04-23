@@ -148,7 +148,7 @@ export async function createExecutionFromApi(input: ExecutionInsert) {
 }
 
 export async function listExecutionAttemptsFromApi() {
-  const response = await fetch("/api/execution-attempts", {
+  const response = await fetch("/api/execution-attempts?mode=simulation", {
     credentials: "same-origin",
   })
 

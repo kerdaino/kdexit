@@ -97,6 +97,7 @@ export function createSupabaseWatcherExecutionAttemptRepository(
         .select("*")
         .eq("user_id", userId)
         .eq("strategy_id", strategyId)
+        .eq("simulation_mode", true)
         .order("attempt_number", { ascending: false })
 
       if (error || !data) {
@@ -138,6 +139,7 @@ export function createSupabaseWatcherExecutionAttemptRepository(
         )
         .eq("id", input.id)
         .eq("user_id", userId)
+        .eq("simulation_mode", true)
         .select("*")
         .single()
 

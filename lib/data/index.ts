@@ -1,10 +1,5 @@
 export {
-  createExecutionAttempt,
-  getExecutionAttempt,
   listExecutionAttempts,
-  recordExecutionAttemptFailure,
-  updateExecutionAttempt,
-  updateExecutionAttemptStatus,
 } from "@/lib/data/execution-attempts"
 export {
   createExecution,

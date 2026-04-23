@@ -176,7 +176,7 @@ export async function listDashboardExecutions() {
 
 export async function listDashboardExecutionAttempts() {
   try {
-    const result = await listExecutionAttempts()
+    const result = await listExecutionAttempts({ mode: "simulation" })
 
     if (result.error) {
       throw new Error(result.error)

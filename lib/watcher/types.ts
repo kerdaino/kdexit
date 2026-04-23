@@ -18,8 +18,6 @@ export type WatcherBlockReason =
   | "missing_take_profit_and_stop_loss"
   | "no_market_price"
   | "market_data_stale"
-  | "unsupported_chain"
-  | "not_authorized_for_live_execution"
   | "unknown"
 
 export type WatcherClock = {
@@ -92,33 +90,6 @@ export type SimulationDecision =
   | {
       kind: "create_attempt"
       attempt: ExecutionAttemptInsert
-    }
-
-export type RetryDecision =
-  | {
-      kind: "do_not_retry"
-      reason: string
-    }
-  | {
-      kind: "retry"
-      retryCount: number
-      nextEvaluationAt: string
-    }
-
-export type ReconciliationResult =
-  | {
-      kind: "noop"
-      reason: string
-    }
-  | {
-      kind: "pending"
-      status: Extract<DbExecutionAttemptStatus, "submitted">
-      reason: string
-    }
-  | {
-      kind: "settled"
-      status: Extract<DbExecutionAttemptStatus, "confirmed" | "failed" | "aborted">
-      reason: string
     }
 
 export type StrategyEvaluationUpdate = {

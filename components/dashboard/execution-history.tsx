@@ -16,7 +16,7 @@ export default function ExecutionHistory({
     <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
       <SectionHeading
         title="Strategy Activity History"
-        description="Create, update, pause, resume, and other strategy-level activity."
+        description="Create, update, pause, resume, and other strategy-level activity. These entries are offchain dashboard records, not live wallet executions."
       />
 
       <div className="mt-6 space-y-4">

@@ -46,29 +46,6 @@ Does not own:
 - database persistence
 - onchain submission
 
-### `retry-policy.ts`
-
-Owns:
-
-- bounded retry decisions
-- next evaluation timing after a failed attempt
-
-Does not own:
-
-- persistence
-- reconciliation
-
-### `reconciliation.ts`
-
-Owns:
-
-- placeholder result shapes for future transaction reconciliation
-
-Does not own:
-
-- RPC calls
-- final settlement logic
-
 ### `simulation.ts`
 
 Owns:
@@ -130,6 +107,7 @@ This keeps watcher logic independent from:
 
 - simulation mode is the default path
 - `/api/internal/watcher/simulate` is authenticated, non-production only, and dry-run only
+- `/api/execution-attempts?mode=simulation` is the canonical read path for watcher simulation history
 - there is no public `/api/watcher/simulate` execution-style route
 - production requests return `404`
 - non-development environments must explicitly enable the route with `KDEXIT_ENABLE_INTERNAL_WATCHER_SIMULATION=true`
@@ -137,8 +115,6 @@ This keeps watcher logic independent from:
 - simulation requires caller-supplied market observations
 - triggered simulations create `execution_attempts` rows with `simulation_mode = true`
 - those attempts move from `evaluating` to `simulated` or `failed`
-- reconciliation is placeholder-only
-- retry logic is explicit and bounded
 - no module here submits a transaction
 - no module here signs with a wallet
 - no module here calls onchain contracts
@@ -147,7 +123,7 @@ This keeps watcher logic independent from:
 
 When the worker process is introduced, it should compose:
 
-1. repository adapters backed by `lib/data/*`
+1. repository adapters backed by worker-safe data access modules
 2. a market data provider
 3. `runWatcherSimulation()` for dry-run execution flow
 
