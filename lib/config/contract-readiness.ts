@@ -2,6 +2,7 @@ import type { ContractReadinessSnapshot } from "@/types/contract-readiness"
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on", "enabled"])
 const EVM_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
+const LIVE_CONTRACT_EXECUTION_ENABLED = false
 
 export const CONTRACT_READINESS_ENV_KEYS = {
   contractReadinessMode: "NEXT_PUBLIC_KDEXIT_CONTRACT_READINESS_MODE",
@@ -117,6 +118,7 @@ export function getContractReadinessSnapshot(): ContractReadinessSnapshot {
   if (enabled) {
     return {
       enabled,
+      liveExecutionEnabled: LIVE_CONTRACT_EXECUTION_ENABLED,
       modeRequested,
       supportedChainIds,
       strategyRegistryAddress,
@@ -136,6 +138,7 @@ export function getContractReadinessSnapshot(): ContractReadinessSnapshot {
   if (modeRequested) {
     return {
       enabled,
+      liveExecutionEnabled: LIVE_CONTRACT_EXECUTION_ENABLED,
       modeRequested,
       supportedChainIds,
       strategyRegistryAddress,
@@ -154,6 +157,7 @@ export function getContractReadinessSnapshot(): ContractReadinessSnapshot {
 
   return {
     enabled,
+    liveExecutionEnabled: LIVE_CONTRACT_EXECUTION_ENABLED,
     modeRequested,
     supportedChainIds,
     strategyRegistryAddress,
@@ -172,6 +176,10 @@ export function getContractReadinessSnapshot(): ContractReadinessSnapshot {
 
 export function isContractInfrastructureConfigured() {
   return getContractReadinessSnapshot().enabled
+}
+
+export function isLiveContractExecutionEnabled() {
+  return LIVE_CONTRACT_EXECUTION_ENABLED
 }
 
 export function getContractReadinessUiSummary() {

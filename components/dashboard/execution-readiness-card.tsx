@@ -173,6 +173,10 @@ export default function ExecutionReadinessCard({
         <p className="mt-3 text-sm leading-6 text-gray-400">
           {readiness.contractReadiness.summary.description}
         </p>
+        <p className="mt-3 text-sm leading-6 text-gray-400">
+          Live contract execution is{" "}
+          {readiness.contractReadiness.liveExecutionEnabled ? "enabled" : "disabled"}.
+        </p>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">

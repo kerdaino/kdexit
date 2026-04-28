@@ -2,6 +2,7 @@ export type ContractConfigSummaryTone = "neutral" | "warning" | "success"
 
 export type ContractReadinessSnapshot = {
   enabled: boolean
+  liveExecutionEnabled: false
   modeRequested: boolean
   supportedChainIds: number[]
   strategyRegistryAddress: string | null

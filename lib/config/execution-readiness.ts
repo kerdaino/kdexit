@@ -81,11 +81,8 @@ export function getServerExecutionReadinessFlags(): ServerExecutionReadinessFlag
     ...publicFlags,
     watcherSimulationMode,
     liveExecutionKillSwitch,
-    // Live execution must pass every explicit safety gate before any server code treats it as enabled.
-    liveExecutionEnabled:
-      contractReadiness.enabled &&
-      publicFlags.liveExecutionMode &&
-      !liveExecutionKillSwitch,
+    // Contract readiness is informational only in this phase. No env combination enables live execution.
+    liveExecutionEnabled: contractReadiness.liveExecutionEnabled,
   }
 }
 

@@ -55,6 +55,14 @@ Phase 5 execution-readiness flags:
 - `KDEXIT_ENABLE_WATCHER_SIMULATION`
 - `KDEXIT_LIVE_EXECUTION_KILL_SWITCH`
 
+Optional contract-readiness references:
+
+- `NEXT_PUBLIC_KDEXIT_CONTRACT_SUPPORTED_CHAIN_IDS`
+- `NEXT_PUBLIC_KDEXIT_STRATEGY_REGISTRY_ADDRESS`
+- `NEXT_PUBLIC_KDEXIT_STRATEGY_REGISTRY_ABI_REF`
+- `NEXT_PUBLIC_KDEXIT_EXECUTION_CONTROLLER_ADDRESS`
+- `NEXT_PUBLIC_KDEXIT_EXECUTION_CONTROLLER_ABI_REF`
+
 If `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is missing, wallet connection UI stays visible in a disabled state instead of crashing the app.
 
 For Vercel or any production deployment, `NEXT_PUBLIC_APP_URL` should be set to your final public origin, for example `https://app.kdexit.com`.
@@ -70,7 +78,7 @@ Execution-readiness safe defaults:
 - watcher simulation defaults to disabled unless explicitly enabled
 - the global live execution kill switch defaults to enabled
 
-These flags do not add or enable trade execution, token approvals, swaps, or contract writes. They are only a centralized readiness and gating layer for future Phase 5 work.
+Contract readiness can report configured chain IDs, contract addresses, and ABI references for future use. These flags and references do not add or enable trade execution, token approvals, swaps, or contract writes. They are only a centralized readiness and gating layer for future Phase 5 work, and live contract execution remains disabled.
 
 ## Learn More
 
