@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { getStrategyExecutionDataMode } from "@/lib/data"
 import {
   createDashboardExecution,
@@ -25,6 +25,11 @@ import type { Phase5ExecutionUiGates } from "@/types/phase5-gates"
 export type FeedbackState = {
   message: string
   tone: "success" | "error"
+}
+
+export type DashboardLoadIssue = {
+  resource: string
+  message: string
 }
 
 export type DashboardSection = "overview" | "strategies" | "activity" | "settings"
@@ -63,43 +68,80 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
   const [showForm, setShowForm] = useState(false)
   const [editingStrategy, setEditingStrategy] = useState<Strategy | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [isRefreshingDashboard, setIsRefreshingDashboard] = useState(false)
+  const [dashboardLoadIssues, setDashboardLoadIssues] = useState<DashboardLoadIssue[]>([])
+  const isDashboardMountedRef = useRef(false)
   const [feedback, setFeedback] = useState<FeedbackState | null>(null)
   const [activeSection, setActiveSection] = useState<DashboardSection>("overview")
   const [pendingStrategyActionById, setPendingStrategyActionById] = useState<
     Record<string, "pause" | "resume" | "delete" | undefined>
   >({})
 
-  useEffect(() => {
-    let isMounted = true
+  const hydrateDashboard = useCallback(async () => {
+    const results = await Promise.allSettled([
+      listDashboardStrategies(),
+      listDashboardExecutions(),
+      listDashboardExecutionAttempts(),
+    ])
 
-    async function hydrateDashboard() {
-      try {
-        const [loadedStrategies, loadedExecutions, loadedExecutionAttempts] = await Promise.all([
-          listDashboardStrategies(),
-          listDashboardExecutions(),
-          listDashboardExecutionAttempts(),
-        ])
+    const nextIssues: DashboardLoadIssue[] = []
+    const [strategiesResult, executionsResult, attemptsResult] = results
 
-        if (!isMounted) {
-          return
-        }
-
-        setStrategies(loadedStrategies)
-        setExecutions(loadedExecutions)
-        setExecutionAttempts(loadedExecutionAttempts)
-      } finally {
-        if (isMounted) {
-          setIsHydrated(true)
-        }
-      }
+    if (!isDashboardMountedRef.current) {
+      return
     }
 
-    void hydrateDashboard()
+    if (strategiesResult.status === "fulfilled") {
+      setStrategies(strategiesResult.value)
+    } else {
+      nextIssues.push({
+        resource: "Strategies",
+        message: getLoadIssueMessage(strategiesResult.reason),
+      })
+    }
+
+    if (executionsResult.status === "fulfilled") {
+      setExecutions(executionsResult.value)
+    } else {
+      nextIssues.push({
+        resource: "Strategy activity",
+        message: getLoadIssueMessage(executionsResult.reason),
+      })
+    }
+
+    if (attemptsResult.status === "fulfilled") {
+      setExecutionAttempts(attemptsResult.value)
+    } else {
+      nextIssues.push({
+        resource: "Watcher simulations",
+        message: getLoadIssueMessage(attemptsResult.reason),
+      })
+    }
+
+    setDashboardLoadIssues(nextIssues)
+    setIsHydrated(true)
+  }, [])
+
+  const reloadDashboard = useCallback(async () => {
+    setIsRefreshingDashboard(true)
+    await hydrateDashboard()
+
+    if (isDashboardMountedRef.current) {
+      setIsRefreshingDashboard(false)
+    }
+  }, [hydrateDashboard])
+
+  useEffect(() => {
+    isDashboardMountedRef.current = true
+    const hydrationTimer = window.setTimeout(() => {
+      void hydrateDashboard()
+    }, 0)
 
     return () => {
-      isMounted = false
+      window.clearTimeout(hydrationTimer)
+      isDashboardMountedRef.current = false
     }
-  }, [])
+  }, [hydrateDashboard])
 
   useEffect(() => {
     if (!feedback) return
@@ -366,6 +408,7 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
     activeSection,
     activeStrategies,
     currentDataMode,
+    dashboardLoadIssues,
     editingStrategy,
     executions,
     executionAttempts,
@@ -379,15 +422,23 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
     handleResumeStrategy,
     handleUpdateStrategy,
     isHydrated,
+    isRefreshingDashboard,
     pausedStrategies,
     pendingStrategyActionById,
     recentExecutions,
     recentExecutionAttempts,
     setActiveSection,
+    reloadDashboard,
     showForm,
     strategies,
     totalStrategies,
   }
+}
+
+function getLoadIssueMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "The request failed before this section could load."
 }
 
 function normalizeStrategyForPhase5Gate(

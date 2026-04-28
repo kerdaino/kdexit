@@ -46,6 +46,15 @@ Optional data mode variable:
 
 - `NEXT_PUBLIC_STRATEGY_DATA_MODE`
 
+Optional monitoring readiness variables:
+
+- `NEXT_PUBLIC_KDEXIT_MONITORING_ENABLED`
+- `NEXT_PUBLIC_KDEXIT_MONITORING_ENVIRONMENT`
+- `NEXT_PUBLIC_KDEXIT_RELEASE`
+- `KDEXIT_MONITORING_ENABLED`
+- `KDEXIT_MONITORING_ENVIRONMENT`
+- `KDEXIT_RELEASE`
+
 Phase 5 execution-readiness flags:
 
 - `NEXT_PUBLIC_KDEXIT_DASHBOARD_BETA_MODE`
@@ -68,6 +77,8 @@ If `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is missing, wallet connection UI stays
 For Vercel or any production deployment, `NEXT_PUBLIC_APP_URL` should be set to your final public origin, for example `https://app.kdexit.com`.
 
 `NEXT_PUBLIC_STRATEGY_DATA_MODE` defaults to `localStorage`. For the authenticated Supabase-backed dashboard flow, set it to `supabase`. Keep `localStorage` only for explicit local/dev fallback use.
+
+Monitoring defaults to disabled and does not send events without a registered transport. Keep vendor secrets server-only; do not put private monitoring keys in `NEXT_PUBLIC_*` variables.
 
 Execution-readiness safe defaults:
 

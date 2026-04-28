@@ -2,6 +2,10 @@
 
 import ActivityHistoryPanel from "@/components/dashboard/activity-history-panel"
 import DashboardShell from "@/components/dashboard/dashboard-shell"
+import {
+  DashboardFailedRequestPanel,
+  DashboardLoadingState,
+} from "@/components/dashboard/dashboard-state-panels"
 import QuickActionsPanel from "@/components/dashboard/quick-actions-panel"
 import SettingsPanel from "@/components/dashboard/settings-panel"
 import StrategyManagementPanel from "@/components/dashboard/strategy-management-panel"
@@ -27,6 +31,7 @@ export default function DashboardPageClient({
     activeSection,
     activeStrategies,
     currentDataMode,
+    dashboardLoadIssues,
     editingStrategy,
     executions,
     executionAttempts,
@@ -40,10 +45,12 @@ export default function DashboardPageClient({
     handleResumeStrategy,
     handleUpdateStrategy,
     isHydrated,
+    isRefreshingDashboard,
     pausedStrategies,
     pendingStrategyActionById,
     recentExecutions,
     recentExecutionAttempts,
+    reloadDashboard,
     setActiveSection,
     showForm,
     strategies,
@@ -55,7 +62,7 @@ export default function DashboardPageClient({
       <main className="min-h-screen bg-[#0B0F14] text-[#E5E7EB]">
         <TopNavigation variant="dashboard" />
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-          <p className="text-sm text-gray-400">Loading dashboard...</p>
+          <DashboardLoadingState />
         </div>
         <Footer />
       </main>
@@ -76,6 +83,21 @@ export default function DashboardPageClient({
           onViewActivity={() => setActiveSection("activity")}
           sections={dashboardSections}
         >
+          {dashboardLoadIssues.length > 0 ? (
+            <div className="mb-6">
+              <DashboardFailedRequestPanel
+                issues={dashboardLoadIssues}
+                onRetry={() => void reloadDashboard()}
+              />
+            </div>
+          ) : null}
+
+          {isRefreshingDashboard && dashboardLoadIssues.length > 0 ? (
+            <div className="mb-6 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-gray-300">
+              Retrying dashboard data requests...
+            </div>
+          ) : null}
+
           {activeSection === "overview" ? (
             <div className="space-y-6">
               <SummaryStatsPanel

@@ -357,7 +357,13 @@ export default function WalletStatusSection() {
         </div>
 
         {isLoadingLinkedWallets ? (
-          <p className="mt-4 text-sm text-gray-400">Loading linked wallets...</p>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-5">
+            <div className="animate-pulse space-y-3">
+              <div className="h-4 w-40 rounded-full bg-white/10" />
+              <div className="h-3 w-64 max-w-full rounded-full bg-white/10" />
+            </div>
+            <p className="mt-4 text-sm text-gray-400">Loading linked wallets...</p>
+          </div>
         ) : linkedWallets.length === 0 ? (
           <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-5 text-sm leading-6 text-gray-400">
             No wallets are linked to this account yet. You can connect a wallet session without
