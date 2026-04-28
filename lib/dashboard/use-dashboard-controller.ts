@@ -20,6 +20,7 @@ import {
 } from "@/lib/dashboard/utils"
 import type { Execution, Strategy } from "@/types/strategy"
 import type { ExecutionAttempt } from "@/types/automation"
+import type { Phase5ExecutionUiGates } from "@/types/phase5-gates"
 
 export type FeedbackState = {
   message: string
@@ -55,7 +56,7 @@ export const dashboardSections: Array<{
   },
 ]
 
-export function useDashboardController() {
+export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [executions, setExecutions] = useState<Execution[]>([])
   const [executionAttempts, setExecutionAttempts] = useState<ExecutionAttempt[]>([])
@@ -163,8 +164,10 @@ export function useDashboardController() {
   }
 
   async function handleAddStrategy(strategy: Strategy) {
+    const strategyForCurrentGate = normalizeStrategyForPhase5Gate(strategy, phase5Gates)
+
     try {
-      const savedStrategy = await createDashboardStrategy(strategy)
+      const savedStrategy = await createDashboardStrategy(strategyForCurrentGate)
 
       setStrategies((prev) => [savedStrategy, ...prev])
       await addExecution({
@@ -185,15 +188,19 @@ export function useDashboardController() {
 
   async function handleUpdateStrategy(updatedStrategy: Strategy) {
     const previousStrategies = strategies
+    const strategyForCurrentGate = normalizeStrategyForPhase5Gate(
+      updatedStrategy,
+      phase5Gates
+    )
 
     try {
       setStrategies((prev) =>
         prev.map((strategy) =>
-          strategy.id === updatedStrategy.id ? updatedStrategy : strategy
+          strategy.id === strategyForCurrentGate.id ? strategyForCurrentGate : strategy
         )
       )
 
-      const savedStrategy = await updateDashboardStrategy(updatedStrategy)
+      const savedStrategy = await updateDashboardStrategy(strategyForCurrentGate)
 
       setStrategies((prev) =>
         prev.map((strategy) => (strategy.id === savedStrategy.id ? savedStrategy : strategy))
@@ -257,6 +264,16 @@ export function useDashboardController() {
   }
 
   async function handleResumeStrategy(id: string) {
+    if (!phase5Gates.strategyActivationEnabled) {
+      setFeedback({
+        message:
+          phase5Gates.disabledReason ??
+          "Strategy activation is disabled until internal beta gates are enabled.",
+        tone: "error",
+      })
+      return
+    }
+
     const target = strategies.find((strategy) => strategy.id === id)
 
     if (target) {
@@ -370,5 +387,20 @@ export function useDashboardController() {
     showForm,
     strategies,
     totalStrategies,
+  }
+}
+
+function normalizeStrategyForPhase5Gate(
+  strategy: Strategy,
+  phase5Gates: Phase5ExecutionUiGates
+): Strategy {
+  if (phase5Gates.strategyActivationEnabled) {
+    return strategy
+  }
+
+  return {
+    ...strategy,
+    status: "paused",
+    triggerEnabled: false,
   }
 }

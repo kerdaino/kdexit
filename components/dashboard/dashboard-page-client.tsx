@@ -12,6 +12,7 @@ import {
   dashboardSections,
   useDashboardController,
 } from "@/lib/dashboard/use-dashboard-controller"
+import { getPhase5ExecutionUiGates } from "@/lib/dashboard/phase5-gates"
 import type { ExecutionReadinessSnapshot } from "@/types/execution-readiness"
 
 type DashboardPageClientProps = {
@@ -21,6 +22,7 @@ type DashboardPageClientProps = {
 export default function DashboardPageClient({
   executionReadiness,
 }: DashboardPageClientProps) {
+  const phase5Gates = getPhase5ExecutionUiGates(executionReadiness)
   const {
     activeSection,
     activeStrategies,
@@ -46,7 +48,7 @@ export default function DashboardPageClient({
     showForm,
     strategies,
     totalStrategies,
-  } = useDashboardController()
+  } = useDashboardController(phase5Gates)
 
   if (!isHydrated) {
     return (
@@ -87,6 +89,7 @@ export default function DashboardPageClient({
                 activeStrategies={activeStrategies}
                 currentDataMode={currentDataMode}
                 executionReadiness={executionReadiness}
+                phase5Gates={phase5Gates}
                 pausedStrategies={pausedStrategies}
                 recentExecutionsCount={recentExecutions.length}
                 recentExecutionAttemptsCount={recentExecutionAttempts.length}
@@ -108,6 +111,7 @@ export default function DashboardPageClient({
           {activeSection === "strategies" ? (
             <StrategyManagementPanel
               editingStrategy={editingStrategy}
+              phase5Gates={phase5Gates}
               pendingStrategyActionById={pendingStrategyActionById}
               showForm={showForm}
               strategies={strategies}
@@ -135,6 +139,7 @@ export default function DashboardPageClient({
             <SettingsPanel
               currentDataMode={currentDataMode}
               executionReadiness={executionReadiness}
+              phase5Gates={phase5Gates}
             />
           ) : null}
         </DashboardShell>

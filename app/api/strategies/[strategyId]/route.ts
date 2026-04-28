@@ -6,6 +6,8 @@ import {
 import type { StrategyUpdateInput } from "@/lib/api/contracts"
 import { validateIdentifierParam } from "@/lib/api/validation/shared"
 import { validateStrategyUpdatePayload } from "@/lib/api/validation/strategies"
+import { getExecutionReadinessSnapshot } from "@/lib/config/execution-readiness"
+import { getPhase5ExecutionUiGates } from "@/lib/dashboard/phase5-gates"
 import type { StrategyRecord, StrategyUpdate } from "@/types/database-records"
 
 function getDataErrorResponse(code: string, message: string) {
@@ -20,10 +22,29 @@ function getDataErrorResponse(code: string, message: string) {
   return jsonError(code, message, { status: 500 })
 }
 
+const PHASE5_GATE_DISABLED_MESSAGE =
+  "Strategy activation is disabled until the internal Phase 5 gates are enabled. Keep the strategy paused with triggers off."
+
+function isPhase5StrategyActivationEnabled() {
+  return getPhase5ExecutionUiGates(getExecutionReadinessSnapshot())
+    .strategyActivationEnabled
+}
+
+function hasRequestedStrategyActivation(updates: StrategyUpdateInput) {
+  return updates.status === "active" || updates.triggerEnabled === true
+}
+
 function toStrategyUpdate(
   existing: StrategyRecord,
-  updates: StrategyUpdateInput
+  updates: StrategyUpdateInput,
+  strategyActivationEnabled: boolean
 ): StrategyUpdate {
+  const requestedTriggerState =
+    updates.triggerEnabled !== undefined
+      ? updates.triggerEnabled
+      : existing.trigger_enabled
+  const requestedStatus = updates.status ?? existing.status
+
   return {
     token_name: updates.tokenName ?? existing.token_name,
     token_symbol: updates.tokenSymbol ?? existing.token_symbol,
@@ -39,13 +60,10 @@ function toStrategyUpdate(
       updates.stopLossPrice !== undefined
         ? updates.stopLossPrice
         : existing.stop_loss_price,
-    trigger_enabled:
-      updates.triggerEnabled !== undefined
-        ? updates.triggerEnabled
-        : existing.trigger_enabled,
+    trigger_enabled: strategyActivationEnabled ? requestedTriggerState : false,
     slippage: updates.slippage ?? existing.slippage,
     notes: updates.notes !== undefined ? updates.notes ?? null : existing.notes,
-    status: updates.status ?? existing.status,
+    status: strategyActivationEnabled ? requestedStatus : "paused",
   }
 }
 
@@ -134,9 +152,19 @@ export async function PATCH(
     return buildOwnedResourceNotFoundResponse("strategy")
   }
 
+  const strategyActivationEnabled = isPhase5StrategyActivationEnabled()
+
+  if (!strategyActivationEnabled && hasRequestedStrategyActivation(validation.data)) {
+    return jsonError(
+      "phase5_execution_gate_disabled",
+      PHASE5_GATE_DISABLED_MESSAGE,
+      { status: 403 }
+    )
+  }
+
   const { data, error } = await auth.supabase
     .from("strategies")
-    .update(toStrategyUpdate(existing, validation.data) as never)
+    .update(toStrategyUpdate(existing, validation.data, strategyActivationEnabled) as never)
     .eq("id", strategyId)
     .eq("user_id", auth.user.id)
     .select()
@@ -149,6 +177,7 @@ export async function PATCH(
   return jsonSuccess(data, {
     meta: {
       resource: "strategy",
+      phase5StrategyActivationEnabled: strategyActivationEnabled,
     },
   })
 }

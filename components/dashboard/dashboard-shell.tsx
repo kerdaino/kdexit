@@ -51,8 +51,8 @@ export default function DashboardShell({
               Dashboard
             </h1>
             <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base">
-              Manage your strategies, monitor exits, and review executions in a
-              cleaner workspace built around the actions you use most.
+              Manage planning strategies, review dry-run activity, and keep execution
+              controls visible only when internal beta gates allow them.
             </p>
           </div>
 

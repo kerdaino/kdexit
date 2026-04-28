@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react"
 import type { Strategy } from "@/types/strategy"
+import type { Phase5ExecutionUiGates } from "@/types/phase5-gates"
 import { getStrategyStatusClass } from "@/lib/dashboard/utils"
 import SectionHeading from "@/components/shared/section-heading"
 
 type StrategyListProps = {
   strategies: Strategy[]
   pendingStrategyActionById?: Record<string, "pause" | "resume" | "delete" | undefined>
+  phase5Gates: Phase5ExecutionUiGates
   onPauseStrategy: (id: string) => Promise<void>
   onResumeStrategy: (id: string) => Promise<void>
   onDeleteStrategy: (id: string) => Promise<boolean>
@@ -31,6 +33,7 @@ export default function StrategyList({
   onResumeStrategy,
   onDeleteStrategy,
   onEditStrategy,
+  phase5Gates,
 }: StrategyListProps) {
   const [filter, setFilter] = useState<FilterStatus>("all")
   const [strategyToDelete, setStrategyToDelete] = useState<Strategy | null>(null)
@@ -53,6 +56,16 @@ export default function StrategyList({
         setStrategyToDelete(null)
       }
     })
+  }
+
+  function getActivationDisabledTitle(action: "pause" | "resume") {
+    if (phase5Gates.strategyActivationEnabled) {
+      return undefined
+    }
+
+    return action === "resume"
+      ? phase5Gates.disabledReason ?? "Strategy activation is disabled."
+      : "Pause remains available only for strategies already created before the Phase 5 gate. Resume is disabled until internal beta gates are enabled."
   }
 
   return (
@@ -195,6 +208,7 @@ export default function StrategyList({
                     <button
                       onClick={() => void onPauseStrategy(strategy.id)}
                       disabled={pendingStrategyActionById[strategy.id] === "pause"}
+                      title={getActivationDisabledTitle("pause")}
                       className="min-h-11 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {pendingStrategyActionById[strategy.id] === "pause"
@@ -204,12 +218,18 @@ export default function StrategyList({
                   ) : strategy.status === "paused" ? (
                     <button
                       onClick={() => void onResumeStrategy(strategy.id)}
-                      disabled={pendingStrategyActionById[strategy.id] === "resume"}
+                      disabled={
+                        pendingStrategyActionById[strategy.id] === "resume" ||
+                        !phase5Gates.strategyActivationEnabled
+                      }
+                      title={getActivationDisabledTitle("resume")}
                       className="min-h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {pendingStrategyActionById[strategy.id] === "resume"
                         ? "Resuming..."
-                        : "Resume"}
+                        : phase5Gates.strategyActivationEnabled
+                          ? "Resume"
+                          : "Resume Disabled"}
                     </button>
                   ) : null}
 
@@ -222,6 +242,12 @@ export default function StrategyList({
                   </button>
                 </div>
               </div>
+              {!phase5Gates.strategyActivationEnabled &&
+              strategy.status === "paused" ? (
+                <p className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-200">
+                  {phase5Gates.disabledReason}
+                </p>
+              ) : null}
             </div>
           ))
         )}

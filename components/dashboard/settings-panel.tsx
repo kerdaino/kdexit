@@ -1,10 +1,13 @@
 import ExecutionReadinessCard from "@/components/dashboard/execution-readiness-card"
+import InternalExecutionControlsPanel from "@/components/dashboard/internal-execution-controls-panel"
 import WalletStatusSection from "@/components/wallet/wallet-status-section"
 import type { ExecutionReadinessSnapshot } from "@/types/execution-readiness"
+import type { Phase5ExecutionUiGates } from "@/types/phase5-gates"
 
 type SettingsPanelProps = {
   currentDataMode: string
   executionReadiness: ExecutionReadinessSnapshot
+  phase5Gates: Phase5ExecutionUiGates
 }
 
 const plannedSettingsSections = [
@@ -43,6 +46,7 @@ const plannedSettingsSections = [
 export default function SettingsPanel({
   currentDataMode,
   executionReadiness,
+  phase5Gates,
 }: SettingsPanelProps) {
   return (
     <div className="space-y-6">
@@ -101,6 +105,13 @@ export default function SettingsPanel({
       </div>
 
       <ExecutionReadinessCard readiness={executionReadiness} />
+
+      {phase5Gates.executionControlsVisible ? (
+        <InternalExecutionControlsPanel
+          executionReadiness={executionReadiness}
+          phase5Gates={phase5Gates}
+        />
+      ) : null}
 
       <WalletStatusSection />
 

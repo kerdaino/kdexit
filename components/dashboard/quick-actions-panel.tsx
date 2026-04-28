@@ -1,9 +1,11 @@
 import type { ExecutionReadinessSnapshot } from "@/types/execution-readiness"
+import type { Phase5ExecutionUiGates } from "@/types/phase5-gates"
 
 type QuickActionsPanelProps = {
   activeStrategies: number
   currentDataMode: string
   executionReadiness: ExecutionReadinessSnapshot
+  phase5Gates: Phase5ExecutionUiGates
   pausedStrategies: number
   recentExecutionsCount: number
   recentExecutionAttemptsCount: number
@@ -18,6 +20,7 @@ export default function QuickActionsPanel({
   activeStrategies,
   currentDataMode,
   executionReadiness,
+  phase5Gates,
   pausedStrategies,
   recentExecutionsCount,
   recentExecutionAttemptsCount,
@@ -67,6 +70,12 @@ export default function QuickActionsPanel({
             Review Settings
           </button>
         </div>
+
+        {!phase5Gates.strategyActivationEnabled ? (
+          <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-200">
+            {phase5Gates.disabledReason}
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-3xl border border-white/10 bg-black/20 p-5 sm:p-6">
@@ -101,6 +110,12 @@ export default function QuickActionsPanel({
             <p className="text-sm text-gray-400">Execution State</p>
             <p className="mt-2 text-lg font-semibold text-white">
               {executionReadiness.label}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-sm text-gray-400">Internal Beta Gates</p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {phase5Gates.strategyActivationEnabled ? "Enabled" : "Disabled"}
             </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">

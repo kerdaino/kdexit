@@ -7,6 +7,7 @@ import {
   kdexitStrategyChainOptions,
   primaryKdexitChain,
 } from "@/lib/web3/chains"
+import type { Phase5ExecutionUiGates } from "@/types/phase5-gates"
 import type { Strategy } from "@/types/strategy"
 
 type CreateStrategyFormProps = {
@@ -14,6 +15,7 @@ type CreateStrategyFormProps = {
   onUpdateStrategy: (strategy: Strategy) => Promise<boolean>
   onCancel: () => void
   editingStrategy?: Strategy | null
+  phase5Gates: Phase5ExecutionUiGates
 }
 
 type FormErrors = {
@@ -137,7 +139,7 @@ function getInitialFormValues(editingStrategy?: Strategy | null): StrategyFormVa
       sellPercentage: "",
       takeProfitPrice: "",
       stopLossPrice: "",
-      triggerEnabled: true,
+      triggerEnabled: false,
       slippage: "1",
       notes: "",
     }
@@ -184,6 +186,7 @@ function CreateStrategyFormContent({
   onUpdateStrategy,
   onCancel,
   editingStrategy,
+  phase5Gates,
 }: CreateStrategyFormProps) {
   const initialValues = getInitialFormValues(editingStrategy)
   const [tokenName, setTokenName] = useState(initialValues.tokenName)
@@ -329,10 +332,12 @@ function CreateStrategyFormContent({
         ? Number(takeProfitPrice.trim())
         : undefined,
       stopLossPrice: stopLossPrice.trim() ? Number(stopLossPrice.trim()) : undefined,
-      triggerEnabled,
+      triggerEnabled: phase5Gates.strategyActivationEnabled && triggerEnabled,
       slippage: Number(slippage.trim()),
       notes: notes.trim() || undefined,
-      status: editingStrategy?.status ?? "active",
+      status: phase5Gates.strategyActivationEnabled
+        ? editingStrategy?.status ?? "active"
+        : "paused",
       createdAt: editingStrategy?.createdAt ?? new Date().toISOString(),
     }
 
@@ -363,7 +368,7 @@ function CreateStrategyFormContent({
           <p className="mt-2 text-sm leading-6 text-gray-400">
             {isEditing
               ? "Update the core rule now, then expand advanced settings only if you need extra automation context."
-              : "Set the core exit rule first, then expand advanced settings only when you need more automation detail."}
+              : "Set the core exit rule first. New strategies stay paused until internal Phase 5 activation gates are enabled."}
           </p>
         </div>
 
@@ -380,6 +385,11 @@ function CreateStrategyFormContent({
       {errors.general ? (
         <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {errors.general}
+        </div>
+      ) : null}
+      {!phase5Gates.strategyActivationEnabled ? (
+        <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-200">
+          {phase5Gates.disabledReason} Saved strategies will remain paused with triggers off.
         </div>
       ) : null}
 
@@ -548,7 +558,7 @@ function CreateStrategyFormContent({
                   type="number"
                   value={slippage}
                   onChange={(e) => setSlippage(e.target.value)}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !phase5Gates.executionPreferenceEditingEnabled}
                   placeholder="e.g. 1"
                   min="0.1"
                   max="50"
@@ -559,7 +569,9 @@ function CreateStrategyFormContent({
                   <p className="mt-2 text-sm text-red-400">{errors.slippage}</p>
                 ) : (
                   <p className="mt-2 text-sm text-gray-500">
-                    Default execution tolerance for future automated exits.
+                    {phase5Gates.executionPreferenceEditingEnabled
+                      ? "Default execution tolerance for future automated exits."
+                      : "Execution preference editing is disabled until internal beta gates are enabled."}
                   </p>
                 )}
               </div>
@@ -571,7 +583,7 @@ function CreateStrategyFormContent({
                     type="checkbox"
                     checked={triggerEnabled}
                     onChange={(e) => setTriggerEnabled(e.target.checked)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !phase5Gates.strategyActivationEnabled}
                     className="mt-1 h-4 w-4 rounded border-white/20 bg-black/30 text-emerald-500"
                   />
                   <span>
@@ -579,8 +591,9 @@ function CreateStrategyFormContent({
                       Trigger Enabled
                     </span>
                     <span className="mt-1 block text-sm leading-6 text-gray-400">
-                      Keep this on when the rule should be considered ready for future
-                      automation runs.
+                      {phase5Gates.strategyActivationEnabled
+                        ? "Keep this on when the rule should be considered ready for future automation runs."
+                        : "Trigger activation is disabled until the internal Phase 5 gates are enabled."}
                     </span>
                   </span>
                 </label>

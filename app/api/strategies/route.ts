@@ -1,6 +1,8 @@
 import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
 import { requireRouteUser, withOwnedInsert } from "@/lib/api/route-auth"
 import { validateStrategyCreatePayload } from "@/lib/api/validation/strategies"
+import { getExecutionReadinessSnapshot } from "@/lib/config/execution-readiness"
+import { getPhase5ExecutionUiGates } from "@/lib/dashboard/phase5-gates"
 import type { StrategyCreateInput } from "@/lib/api/contracts"
 import type { StrategyInsert } from "@/types/database-records"
 
@@ -16,7 +18,22 @@ function getDataErrorResponse(code: string, message: string) {
   return jsonError(code, message, { status: 500 })
 }
 
-function toStrategyInsert(input: StrategyCreateInput): StrategyInsert {
+const PHASE5_GATE_DISABLED_MESSAGE =
+  "Strategy activation is disabled until the internal Phase 5 gates are enabled. Save the strategy as paused with triggers off."
+
+function isPhase5StrategyActivationEnabled() {
+  return getPhase5ExecutionUiGates(getExecutionReadinessSnapshot())
+    .strategyActivationEnabled
+}
+
+function hasRequestedStrategyActivation(input: StrategyCreateInput) {
+  return input.status === "active" || input.triggerEnabled === true
+}
+
+function toStrategyInsert(
+  input: StrategyCreateInput,
+  strategyActivationEnabled: boolean
+): StrategyInsert {
   return {
     token_name: input.tokenName,
     token_symbol: input.tokenSymbol,
@@ -26,10 +43,10 @@ function toStrategyInsert(input: StrategyCreateInput): StrategyInsert {
     sell_percentage: input.sellPercentage,
     take_profit_price: input.takeProfitPrice ?? null,
     stop_loss_price: input.stopLossPrice ?? null,
-    trigger_enabled: input.triggerEnabled ?? true,
+    trigger_enabled: strategyActivationEnabled ? input.triggerEnabled ?? true : false,
     slippage: input.slippage ?? 1,
     notes: input.notes ?? null,
-    status: input.status ?? "active",
+    status: strategyActivationEnabled ? input.status ?? "active" : "paused",
   }
 }
 
@@ -74,7 +91,20 @@ export async function POST(request: Request) {
     return auth.response
   }
 
-  const insertPayload = withOwnedInsert(auth.user, toStrategyInsert(validation.data))
+  const strategyActivationEnabled = isPhase5StrategyActivationEnabled()
+
+  if (!strategyActivationEnabled && hasRequestedStrategyActivation(validation.data)) {
+    return jsonError(
+      "phase5_execution_gate_disabled",
+      PHASE5_GATE_DISABLED_MESSAGE,
+      { status: 403 }
+    )
+  }
+
+  const insertPayload = withOwnedInsert(
+    auth.user,
+    toStrategyInsert(validation.data, strategyActivationEnabled)
+  )
 
   const { data, error } = await auth.supabase
     .from("strategies")
@@ -90,6 +120,7 @@ export async function POST(request: Request) {
     status: 201,
     meta: {
       resource: "strategy",
+      phase5StrategyActivationEnabled: strategyActivationEnabled,
     },
   })
 }
