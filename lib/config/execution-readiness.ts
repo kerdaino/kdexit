@@ -1,10 +1,10 @@
 import { getContractReadinessSnapshot } from "@/lib/config/contract-readiness"
+import { readBooleanEnvFlag } from "@/lib/config/env"
+import type { ContractReadinessSnapshot } from "@/types/contract-readiness"
 import type {
   ExecutionReadinessSnapshot,
   ExecutionReadinessStatusId,
 } from "@/types/execution-readiness"
-
-const TRUE_VALUES = new Set(["1", "true", "yes", "on", "enabled"])
 
 export const EXECUTION_READINESS_ENV_KEYS = {
   contractReadinessMode: "NEXT_PUBLIC_KDEXIT_CONTRACT_READINESS_MODE",
@@ -28,32 +28,21 @@ export type ServerExecutionReadinessFlags = PublicExecutionReadinessFlags & {
   liveExecutionEnabled: boolean
 }
 
-function readBooleanFlag(
-  value: string | undefined,
-  defaultValue: boolean
-): boolean {
-  if (!value) {
-    return defaultValue
-  }
-
-  return TRUE_VALUES.has(value.trim().toLowerCase())
-}
-
 function readPublicExecutionReadinessFlags(): PublicExecutionReadinessFlags {
   return {
-    dashboardBetaMode: readBooleanFlag(
+    dashboardBetaMode: readBooleanEnvFlag(
       process.env.NEXT_PUBLIC_KDEXIT_DASHBOARD_BETA_MODE,
       false
     ),
-    walletLinkedBetaMode: readBooleanFlag(
+    walletLinkedBetaMode: readBooleanEnvFlag(
       process.env.NEXT_PUBLIC_KDEXIT_WALLET_LINKED_BETA_MODE,
       false
     ),
-    contractReadinessMode: readBooleanFlag(
+    contractReadinessMode: readBooleanEnvFlag(
       process.env.NEXT_PUBLIC_KDEXIT_CONTRACT_READINESS_MODE,
       false
     ),
-    liveExecutionMode: readBooleanFlag(
+    liveExecutionMode: readBooleanEnvFlag(
       process.env.NEXT_PUBLIC_KDEXIT_LIVE_EXECUTION_MODE,
       false
     ),
@@ -67,12 +56,12 @@ export function getPublicExecutionReadinessFlags(): PublicExecutionReadinessFlag
 export function getServerExecutionReadinessFlags(): ServerExecutionReadinessFlags {
   const publicFlags = readPublicExecutionReadinessFlags()
   const contractReadiness = getContractReadinessSnapshot()
-  const watcherSimulationMode = readBooleanFlag(
+  const watcherSimulationMode = readBooleanEnvFlag(
     process.env.KDEXIT_ENABLE_WATCHER_SIMULATION ??
       process.env.KDEXIT_ENABLE_INTERNAL_WATCHER_SIMULATION,
     false
   )
-  const liveExecutionKillSwitch = readBooleanFlag(
+  const liveExecutionKillSwitch = readBooleanEnvFlag(
     process.env.KDEXIT_LIVE_EXECUTION_KILL_SWITCH,
     true
   )
@@ -115,12 +104,14 @@ export function isLiveExecutionEnabled() {
 }
 
 export function getExecutionReadinessStatus(
-  flags: ServerExecutionReadinessFlags
+  flags: ServerExecutionReadinessFlags,
+  contractReadiness: ContractReadinessSnapshot
 ): ExecutionReadinessStatusId {
-  const betaExecutionVisible = flags.dashboardBetaMode || flags.walletLinkedBetaMode
-  const contractReadiness = getContractReadinessSnapshot()
-
-  if (flags.liveExecutionEnabled && betaExecutionVisible) {
+  if (
+    flags.liveExecutionEnabled &&
+    flags.dashboardBetaMode &&
+    flags.walletLinkedBetaMode
+  ) {
     return "internal_beta_execution_only"
   }
 
@@ -138,7 +129,7 @@ export function getExecutionReadinessStatus(
 export function getExecutionReadinessSnapshot(): ExecutionReadinessSnapshot {
   const flags = getServerExecutionReadinessFlags()
   const contractReadiness = getContractReadinessSnapshot()
-  const status = getExecutionReadinessStatus(flags)
+  const status = getExecutionReadinessStatus(flags, contractReadiness)
 
   switch (status) {
     case "internal_beta_execution_only":

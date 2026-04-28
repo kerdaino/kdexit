@@ -1,8 +1,12 @@
 import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
 import { requireRouteUser, withOwnedInsert } from "@/lib/api/route-auth"
 import { validateStrategyCreatePayload } from "@/lib/api/validation/strategies"
-import { getExecutionReadinessSnapshot } from "@/lib/config/execution-readiness"
-import { getPhase5ExecutionUiGates } from "@/lib/dashboard/phase5-gates"
+import {
+  PHASE5_STRATEGY_ACTIVATION_DISABLED_MESSAGE,
+  getPhase5StrategyActivationFields,
+  hasRequestedPhase5StrategyActivation,
+  isPhase5StrategyActivationEnabled,
+} from "@/lib/config/phase5-server-gates"
 import type { StrategyCreateInput } from "@/lib/api/contracts"
 import type { StrategyInsert } from "@/types/database-records"
 
@@ -18,22 +22,19 @@ function getDataErrorResponse(code: string, message: string) {
   return jsonError(code, message, { status: 500 })
 }
 
-const PHASE5_GATE_DISABLED_MESSAGE =
-  "Strategy activation is disabled until the internal Phase 5 gates are enabled. Save the strategy as paused with triggers off."
-
-function isPhase5StrategyActivationEnabled() {
-  return getPhase5ExecutionUiGates(getExecutionReadinessSnapshot())
-    .strategyActivationEnabled
-}
-
-function hasRequestedStrategyActivation(input: StrategyCreateInput) {
-  return input.status === "active" || input.triggerEnabled === true
-}
-
 function toStrategyInsert(
   input: StrategyCreateInput,
   strategyActivationEnabled: boolean
 ): StrategyInsert {
+  const activationFields = getPhase5StrategyActivationFields(
+    strategyActivationEnabled,
+    input,
+    {
+      status: "active",
+      triggerEnabled: true,
+    }
+  )
+
   return {
     token_name: input.tokenName,
     token_symbol: input.tokenSymbol,
@@ -43,10 +44,10 @@ function toStrategyInsert(
     sell_percentage: input.sellPercentage,
     take_profit_price: input.takeProfitPrice ?? null,
     stop_loss_price: input.stopLossPrice ?? null,
-    trigger_enabled: strategyActivationEnabled ? input.triggerEnabled ?? true : false,
+    trigger_enabled: activationFields.triggerEnabled,
     slippage: input.slippage ?? 1,
     notes: input.notes ?? null,
-    status: strategyActivationEnabled ? input.status ?? "active" : "paused",
+    status: activationFields.status,
   }
 }
 
@@ -93,10 +94,13 @@ export async function POST(request: Request) {
 
   const strategyActivationEnabled = isPhase5StrategyActivationEnabled()
 
-  if (!strategyActivationEnabled && hasRequestedStrategyActivation(validation.data)) {
+  if (
+    !strategyActivationEnabled &&
+    hasRequestedPhase5StrategyActivation(validation.data)
+  ) {
     return jsonError(
       "phase5_execution_gate_disabled",
-      PHASE5_GATE_DISABLED_MESSAGE,
+      PHASE5_STRATEGY_ACTIVATION_DISABLED_MESSAGE,
       { status: 403 }
     )
   }

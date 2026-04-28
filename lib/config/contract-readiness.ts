@@ -1,6 +1,6 @@
+import { readBooleanEnvFlag } from "@/lib/config/env"
 import type { ContractReadinessSnapshot } from "@/types/contract-readiness"
 
-const TRUE_VALUES = new Set(["1", "true", "yes", "on", "enabled"])
 const EVM_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
 const LIVE_CONTRACT_EXECUTION_ENABLED = false
 
@@ -12,14 +12,6 @@ export const CONTRACT_READINESS_ENV_KEYS = {
   strategyRegistryAddress: "NEXT_PUBLIC_KDEXIT_STRATEGY_REGISTRY_ADDRESS",
   supportedChainIds: "NEXT_PUBLIC_KDEXIT_CONTRACT_SUPPORTED_CHAIN_IDS",
 } as const
-
-function readBooleanFlag(value: string | undefined, defaultValue: boolean) {
-  if (!value) {
-    return defaultValue
-  }
-
-  return TRUE_VALUES.has(value.trim().toLowerCase())
-}
 
 function readOptionalString(value: string | undefined) {
   const trimmedValue = value?.trim()
@@ -48,7 +40,7 @@ function isValidContractAddress(value: string | null) {
 }
 
 export function getContractReadinessSnapshot(): ContractReadinessSnapshot {
-  const modeRequested = readBooleanFlag(
+  const modeRequested = readBooleanEnvFlag(
     process.env.NEXT_PUBLIC_KDEXIT_CONTRACT_READINESS_MODE,
     false
   )

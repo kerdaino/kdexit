@@ -6,8 +6,12 @@ import {
 import type { StrategyUpdateInput } from "@/lib/api/contracts"
 import { validateIdentifierParam } from "@/lib/api/validation/shared"
 import { validateStrategyUpdatePayload } from "@/lib/api/validation/strategies"
-import { getExecutionReadinessSnapshot } from "@/lib/config/execution-readiness"
-import { getPhase5ExecutionUiGates } from "@/lib/dashboard/phase5-gates"
+import {
+  PHASE5_STRATEGY_ACTIVATION_DISABLED_MESSAGE,
+  getPhase5StrategyActivationFields,
+  hasRequestedPhase5StrategyActivation,
+  isPhase5StrategyActivationEnabled,
+} from "@/lib/config/phase5-server-gates"
 import type { StrategyRecord, StrategyUpdate } from "@/types/database-records"
 
 function getDataErrorResponse(code: string, message: string) {
@@ -22,28 +26,19 @@ function getDataErrorResponse(code: string, message: string) {
   return jsonError(code, message, { status: 500 })
 }
 
-const PHASE5_GATE_DISABLED_MESSAGE =
-  "Strategy activation is disabled until the internal Phase 5 gates are enabled. Keep the strategy paused with triggers off."
-
-function isPhase5StrategyActivationEnabled() {
-  return getPhase5ExecutionUiGates(getExecutionReadinessSnapshot())
-    .strategyActivationEnabled
-}
-
-function hasRequestedStrategyActivation(updates: StrategyUpdateInput) {
-  return updates.status === "active" || updates.triggerEnabled === true
-}
-
 function toStrategyUpdate(
   existing: StrategyRecord,
   updates: StrategyUpdateInput,
   strategyActivationEnabled: boolean
 ): StrategyUpdate {
-  const requestedTriggerState =
-    updates.triggerEnabled !== undefined
-      ? updates.triggerEnabled
-      : existing.trigger_enabled
-  const requestedStatus = updates.status ?? existing.status
+  const activationFields = getPhase5StrategyActivationFields(
+    strategyActivationEnabled,
+    updates,
+    {
+      status: existing.status,
+      triggerEnabled: existing.trigger_enabled,
+    }
+  )
 
   return {
     token_name: updates.tokenName ?? existing.token_name,
@@ -60,10 +55,10 @@ function toStrategyUpdate(
       updates.stopLossPrice !== undefined
         ? updates.stopLossPrice
         : existing.stop_loss_price,
-    trigger_enabled: strategyActivationEnabled ? requestedTriggerState : false,
+    trigger_enabled: activationFields.triggerEnabled,
     slippage: updates.slippage ?? existing.slippage,
     notes: updates.notes !== undefined ? updates.notes ?? null : existing.notes,
-    status: strategyActivationEnabled ? requestedStatus : "paused",
+    status: activationFields.status,
   }
 }
 
@@ -154,10 +149,13 @@ export async function PATCH(
 
   const strategyActivationEnabled = isPhase5StrategyActivationEnabled()
 
-  if (!strategyActivationEnabled && hasRequestedStrategyActivation(validation.data)) {
+  if (
+    !strategyActivationEnabled &&
+    hasRequestedPhase5StrategyActivation(validation.data)
+  ) {
     return jsonError(
       "phase5_execution_gate_disabled",
-      PHASE5_GATE_DISABLED_MESSAGE,
+      PHASE5_STRATEGY_ACTIVATION_DISABLED_MESSAGE,
       { status: 403 }
     )
   }
