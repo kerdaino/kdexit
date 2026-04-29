@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js"
 import { jsonError } from "@/lib/api/http"
+import { getConfiguredAppUrl } from "@/lib/site/url"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 export async function requireRouteUser() {
@@ -40,5 +41,32 @@ export function withOwnedInsert<T extends object>(
   return {
     ...payload,
     user_id: user.id,
+  }
+}
+
+export function requireSameOriginMutation(request: Request) {
+  const origin = request.headers.get("origin")
+
+  if (!origin) {
+    return { ok: true as const }
+  }
+
+  const requestOrigin = new URL(request.url).origin
+  const configuredOrigin = getConfiguredAppUrl()
+  const allowedOrigins = new Set(
+    [requestOrigin, configuredOrigin].filter(Boolean)
+  )
+
+  if (allowedOrigins.has(origin)) {
+    return { ok: true as const }
+  }
+
+  return {
+    ok: false as const,
+    response: jsonError(
+      "forbidden_origin",
+      "This request origin is not allowed.",
+      { status: 403 }
+    ),
   }
 }

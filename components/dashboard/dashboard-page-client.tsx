@@ -6,6 +6,7 @@ import {
   DashboardFailedRequestPanel,
   DashboardLoadingState,
 } from "@/components/dashboard/dashboard-state-panels"
+import OperationalAuditPanel from "@/components/dashboard/operational-audit-panel"
 import QuickActionsPanel from "@/components/dashboard/quick-actions-panel"
 import SettingsPanel from "@/components/dashboard/settings-panel"
 import StrategyManagementPanel from "@/components/dashboard/strategy-management-panel"
@@ -154,6 +155,17 @@ export default function DashboardPageClient({
               executions={executions}
               executionAttempts={executionAttempts}
               title="Review activity and watcher simulations"
+            />
+          ) : null}
+
+          {activeSection === "audit" ? (
+            <OperationalAuditPanel
+              currentDataMode={currentDataMode}
+              dashboardLoadIssues={dashboardLoadIssues}
+              executionAttempts={executionAttempts}
+              executionReadiness={executionReadiness}
+              executions={executions}
+              strategies={strategies}
             />
           ) : null}
 

@@ -32,7 +32,12 @@ export type DashboardLoadIssue = {
   message: string
 }
 
-export type DashboardSection = "overview" | "strategies" | "activity" | "settings"
+export type DashboardSection =
+  | "overview"
+  | "strategies"
+  | "activity"
+  | "audit"
+  | "settings"
 
 export const dashboardSections: Array<{
   id: DashboardSection
@@ -53,6 +58,11 @@ export const dashboardSections: Array<{
     id: "activity",
     label: "Activity",
     description: "Track execution and strategy history in one timeline.",
+  },
+  {
+    id: "audit",
+    label: "Audit",
+    description: "Read-only operational visibility for internal review.",
   },
   {
     id: "settings",

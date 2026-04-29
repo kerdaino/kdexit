@@ -1,5 +1,13 @@
 import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
-import { requireRouteUser, withOwnedInsert } from "@/lib/api/route-auth"
+import {
+  requireRouteUser,
+  requireSameOriginMutation,
+  withOwnedInsert,
+} from "@/lib/api/route-auth"
+import {
+  reportApiMutationFailureAlert,
+  reportWalletLinkingErrorAlert,
+} from "@/lib/alerts"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { WalletLinkCreateInput } from "@/lib/api/contracts"
 import { validateWalletLinkCreatePayload } from "@/lib/api/validation/wallet-links"
@@ -89,6 +97,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const payload = await request.json().catch(() => null)
   const validation = validateWalletLinkCreatePayload(payload)
 
@@ -113,6 +127,12 @@ export async function POST(request: Request) {
   )
 
   if (existingWalletLink.error) {
+    void reportWalletLinkingErrorAlert({
+      code: "wallet_link_duplicate_check_failed",
+      operation: "create",
+      source: "api",
+    })
+
     return getDataErrorResponse("wallet_link_duplicate_check_failed", existingWalletLink.error)
   }
 
@@ -130,6 +150,12 @@ export async function POST(request: Request) {
     const primaryClearError = await clearPrimaryWalletLinks(auth.supabase, auth.user.id)
 
     if (primaryClearError) {
+      void reportWalletLinkingErrorAlert({
+        code: "wallet_link_primary_clear_failed",
+        operation: "create",
+        source: "api",
+      })
+
       return getDataErrorResponse("wallet_link_primary_clear_failed", primaryClearError)
     }
   }
@@ -152,6 +178,18 @@ export async function POST(request: Request) {
         }
       )
     }
+
+    void reportApiMutationFailureAlert({
+      code: "wallet_link_create_failed",
+      operation: "create",
+      resource: "wallet_link",
+      status: 500,
+    })
+    void reportWalletLinkingErrorAlert({
+      code: "wallet_link_create_failed",
+      operation: "create",
+      source: "api",
+    })
 
     return getDataErrorResponse(
       "wallet_link_create_failed",

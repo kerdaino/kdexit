@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import DashboardPageClient from "@/components/dashboard/dashboard-page-client"
 import Footer from "@/components/shared/footer"
 import TopNavigation from "@/components/shared/top-navigation"
+import { reportReadinessGateMisconfigurationAlert } from "@/lib/alerts"
 import { getExecutionReadinessSnapshot } from "@/lib/config/execution-readiness"
 import { ensureProfileForUser } from "@/lib/profiles/bootstrap"
 import { hasSupabaseEnv } from "@/lib/supabase/env"
@@ -92,6 +93,7 @@ export default async function DashboardPage() {
   }
 
   const executionReadiness = getExecutionReadinessSnapshot()
+  void reportReadinessGateMisconfigurationAlert(executionReadiness)
 
   return <DashboardPageClient executionReadiness={executionReadiness} />
 }

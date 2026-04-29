@@ -2,7 +2,9 @@ import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
 import {
   buildOwnedResourceNotFoundResponse,
   requireRouteUser,
+  requireSameOriginMutation,
 } from "@/lib/api/route-auth"
+import { reportApiMutationFailureAlert } from "@/lib/alerts"
 import type { StrategyUpdateInput } from "@/lib/api/contracts"
 import { validateIdentifierParam } from "@/lib/api/validation/shared"
 import { validateStrategyUpdatePayload } from "@/lib/api/validation/strategies"
@@ -107,6 +109,12 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ strategyId: string }> }
 ) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const { strategyId } = await context.params
   const strategyIdError = validateIdentifierParam(strategyId, "Strategy ID")
 
@@ -153,6 +161,13 @@ export async function PATCH(
     !strategyActivationEnabled &&
     hasRequestedPhase5StrategyActivation(validation.data)
   ) {
+    void reportApiMutationFailureAlert({
+      code: "phase5_execution_gate_disabled",
+      operation: "update",
+      resource: "strategy",
+      status: 403,
+    })
+
     return jsonError(
       "phase5_execution_gate_disabled",
       PHASE5_STRATEGY_ACTIVATION_DISABLED_MESSAGE,
@@ -169,7 +184,17 @@ export async function PATCH(
     .single()
 
   if (error || !data) {
-    return getDataErrorResponse("strategy_update_failed", error?.message ?? "Failed to update strategy.")
+    void reportApiMutationFailureAlert({
+      code: "strategy_update_failed",
+      operation: "update",
+      resource: "strategy",
+      status: 500,
+    })
+
+    return getDataErrorResponse(
+      "strategy_update_failed",
+      error?.message ?? "Failed to update strategy."
+    )
   }
 
   return jsonSuccess(data, {
@@ -181,9 +206,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ strategyId: string }> }
 ) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const { strategyId } = await context.params
   const strategyIdError = validateIdentifierParam(strategyId, "Strategy ID")
 
@@ -221,6 +252,13 @@ export async function DELETE(
     .eq("user_id", auth.user.id)
 
   if (error) {
+    void reportApiMutationFailureAlert({
+      code: "strategy_delete_failed",
+      operation: "delete",
+      resource: "strategy",
+      status: 500,
+    })
+
     return getDataErrorResponse("strategy_delete_failed", error.message)
   }
 

@@ -1,5 +1,12 @@
 import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
-import { requireRouteUser } from "@/lib/api/route-auth"
+import {
+  requireRouteUser,
+  requireSameOriginMutation,
+} from "@/lib/api/route-auth"
+import {
+  reportApiMutationFailureAlert,
+  reportWalletLinkingErrorAlert,
+} from "@/lib/alerts"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { WalletLinkUpdateInput } from "@/lib/api/contracts"
 import type { Database } from "@/lib/supabase/types"
@@ -102,6 +109,12 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ walletLinkId: string }> }
 ) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const { walletLinkId } = await context.params
   const walletLinkIdError = validateIdentifierParam(walletLinkId, "Wallet link ID")
 
@@ -150,6 +163,12 @@ export async function PATCH(
     )
 
     if (primaryClearError) {
+      void reportWalletLinkingErrorAlert({
+        code: "wallet_link_primary_clear_failed",
+        operation: "update",
+        source: "api",
+      })
+
       return getDataErrorResponse("wallet_link_primary_clear_failed", primaryClearError)
     }
   }
@@ -163,6 +182,18 @@ export async function PATCH(
     .single()
 
   if (error || !data) {
+    void reportApiMutationFailureAlert({
+      code: "wallet_link_update_failed",
+      operation: "update",
+      resource: "wallet_link",
+      status: 500,
+    })
+    void reportWalletLinkingErrorAlert({
+      code: "wallet_link_update_failed",
+      operation: "update",
+      source: "api",
+    })
+
     return getDataErrorResponse(
       "wallet_link_update_failed",
       error?.message ?? "Failed to update wallet link."
@@ -177,9 +208,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ walletLinkId: string }> }
 ) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const { walletLinkId } = await context.params
   const walletLinkIdError = validateIdentifierParam(walletLinkId, "Wallet link ID")
 
@@ -217,6 +254,18 @@ export async function DELETE(
     .eq("user_id", auth.user.id)
 
   if (error) {
+    void reportApiMutationFailureAlert({
+      code: "wallet_link_delete_failed",
+      operation: "delete",
+      resource: "wallet_link",
+      status: 500,
+    })
+    void reportWalletLinkingErrorAlert({
+      code: "wallet_link_delete_failed",
+      operation: "delete",
+      source: "api",
+    })
+
     return getDataErrorResponse("wallet_link_delete_failed", error.message)
   }
 

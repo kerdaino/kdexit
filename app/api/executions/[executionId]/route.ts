@@ -2,7 +2,9 @@ import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
 import {
   buildOwnedResourceNotFoundResponse,
   requireRouteUser,
+  requireSameOriginMutation,
 } from "@/lib/api/route-auth"
+import { reportApiMutationFailureAlert } from "@/lib/alerts"
 import type { ExecutionUpdateInput } from "@/lib/api/contracts"
 import { validateIdentifierParam } from "@/lib/api/validation/shared"
 import { validateExecutionUpdatePayload } from "@/lib/api/validation/executions"
@@ -90,6 +92,12 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ executionId: string }> }
 ) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const { executionId } = await context.params
   const executionIdError = validateIdentifierParam(executionId, "Execution ID")
 
@@ -139,7 +147,17 @@ export async function PATCH(
     .single()
 
   if (error || !data) {
-    return getDataErrorResponse("execution_update_failed", error?.message ?? "Failed to update execution.")
+    void reportApiMutationFailureAlert({
+      code: "execution_update_failed",
+      operation: "update",
+      resource: "execution",
+      status: 500,
+    })
+
+    return getDataErrorResponse(
+      "execution_update_failed",
+      error?.message ?? "Failed to update execution."
+    )
   }
 
   return jsonSuccess(data, {
@@ -150,9 +168,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ executionId: string }> }
 ) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const { executionId } = await context.params
   const executionIdError = validateIdentifierParam(executionId, "Execution ID")
 
@@ -190,6 +214,13 @@ export async function DELETE(
     .eq("user_id", auth.user.id)
 
   if (error) {
+    void reportApiMutationFailureAlert({
+      code: "execution_delete_failed",
+      operation: "delete",
+      resource: "execution",
+      status: 500,
+    })
+
     return getDataErrorResponse("execution_delete_failed", error.message)
   }
 

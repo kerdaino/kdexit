@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import ActionFeedback from "@/components/shared/action-feedback"
 import ConnectWalletButton from "@/components/wallet/connect-wallet-button"
+import { reportWalletLinkingErrorAlert } from "@/lib/alerts"
 import { useLinkedWallets } from "@/lib/wallet/use-linked-wallets"
 import { primaryKdexitChain, getSupportedChainLabels } from "@/lib/web3/chains"
 import { formatWalletAddress, useWalletConnection } from "@/lib/web3/use-wallet-connection"
@@ -92,6 +93,11 @@ export default function WalletStatusSection() {
       })
     } catch (error) {
       console.error("Failed to link wallet:", error)
+      void reportWalletLinkingErrorAlert({
+        code: "client_wallet_link_create_failed",
+        operation: "create",
+        source: "client",
+      })
       setFeedback({
         message:
           error instanceof Error ? error.message : "We could not link that wallet right now.",
@@ -115,6 +121,11 @@ export default function WalletStatusSection() {
       })
     } catch (error) {
       console.error("Failed to update primary wallet:", error)
+      void reportWalletLinkingErrorAlert({
+        code: "client_wallet_link_update_failed",
+        operation: "update",
+        source: "client",
+      })
       setFeedback({
         message:
           error instanceof Error
@@ -137,6 +148,11 @@ export default function WalletStatusSection() {
       })
     } catch (error) {
       console.error("Failed to unlink wallet:", error)
+      void reportWalletLinkingErrorAlert({
+        code: "client_wallet_link_delete_failed",
+        operation: "delete",
+        source: "client",
+      })
       setFeedback({
         message:
           error instanceof Error

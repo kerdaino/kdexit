@@ -1,6 +1,11 @@
 import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
-import { requireRouteUser, withOwnedInsert } from "@/lib/api/route-auth"
+import {
+  requireRouteUser,
+  requireSameOriginMutation,
+  withOwnedInsert,
+} from "@/lib/api/route-auth"
 import { validateStrategyCreatePayload } from "@/lib/api/validation/strategies"
+import { reportApiMutationFailureAlert } from "@/lib/alerts"
 import {
   PHASE5_STRATEGY_ACTIVATION_DISABLED_MESSAGE,
   getPhase5StrategyActivationFields,
@@ -76,6 +81,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const payload = await request.json().catch(() => null)
   const validation = validateStrategyCreatePayload(payload)
 
@@ -98,6 +109,13 @@ export async function POST(request: Request) {
     !strategyActivationEnabled &&
     hasRequestedPhase5StrategyActivation(validation.data)
   ) {
+    void reportApiMutationFailureAlert({
+      code: "phase5_execution_gate_disabled",
+      operation: "create",
+      resource: "strategy",
+      status: 403,
+    })
+
     return jsonError(
       "phase5_execution_gate_disabled",
       PHASE5_STRATEGY_ACTIVATION_DISABLED_MESSAGE,
@@ -117,7 +135,17 @@ export async function POST(request: Request) {
     .single()
 
   if (error || !data) {
-    return getDataErrorResponse("strategy_create_failed", error?.message ?? "Failed to create strategy.")
+    void reportApiMutationFailureAlert({
+      code: "strategy_create_failed",
+      operation: "create",
+      resource: "strategy",
+      status: 500,
+    })
+
+    return getDataErrorResponse(
+      "strategy_create_failed",
+      error?.message ?? "Failed to create strategy."
+    )
   }
 
   return jsonSuccess(data, {

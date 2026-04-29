@@ -80,6 +80,12 @@ For Vercel or any production deployment, `NEXT_PUBLIC_APP_URL` should be set to 
 
 Monitoring defaults to disabled and does not send events without a registered transport. Keep vendor secrets server-only; do not put private monitoring keys in `NEXT_PUBLIC_*` variables.
 
+For a deployment-focused variable matrix, including public versus server-only
+classification and local/staging/production value guidance, see
+[Production Environment Checklist](docs/production-environment-checklist.md).
+For beta release operations, see
+[Beta Deployment Readiness Checklist](docs/beta-deployment-readiness-checklist.md).
+
 Execution-readiness safe defaults:
 
 - dashboard beta mode defaults to disabled

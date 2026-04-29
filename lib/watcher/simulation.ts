@@ -1,3 +1,7 @@
+import {
+  reportSuspiciousRepeatedFailuresAlert,
+  reportWatcherSimulationFailureAlert,
+} from "@/lib/alerts"
 import { getSimulationDecision } from "@/lib/watcher/execution-attempts"
 import { selectStrategiesForEvaluation } from "@/lib/watcher/strategy-selection"
 import { evaluateStrategyTrigger } from "@/lib/watcher/trigger-evaluator"
@@ -111,7 +115,7 @@ export async function runWatcherSimulation(
     })
   )
 
-  return {
+  const result: SimulationRunResult = {
     evaluatedAt,
     summary: {
       evaluatedStrategies: items.length,
@@ -121,4 +125,18 @@ export async function runWatcherSimulation(
     },
     items,
   }
+
+  if (result.summary.failedAttempts > 0) {
+    void reportWatcherSimulationFailureAlert({
+      evaluatedStrategies: result.summary.evaluatedStrategies,
+      failedAttempts: result.summary.failedAttempts,
+      route: "watcher_simulation",
+    })
+    void reportSuspiciousRepeatedFailuresAlert({
+      failureCount: result.summary.failedAttempts,
+      scope: "watcher_simulation_attempts",
+    })
+  }
+
+  return result
 }

@@ -1,5 +1,10 @@
 import { jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/http"
-import { requireRouteUser, withOwnedInsert } from "@/lib/api/route-auth"
+import {
+  requireRouteUser,
+  requireSameOriginMutation,
+  withOwnedInsert,
+} from "@/lib/api/route-auth"
+import { reportApiMutationFailureAlert } from "@/lib/alerts"
 import type { ExecutionCreateInput } from "@/lib/api/contracts"
 import { validateExecutionCreatePayload } from "@/lib/api/validation/executions"
 import type { ExecutionInsert } from "@/types/database-records"
@@ -60,6 +65,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const origin = requireSameOriginMutation(request)
+
+  if (!origin.ok) {
+    return origin.response
+  }
+
   const payload = await request.json().catch(() => null)
   const validation = validateExecutionCreatePayload(payload)
 
@@ -85,7 +96,17 @@ export async function POST(request: Request) {
     .single()
 
   if (error || !data) {
-    return getDataErrorResponse("execution_create_failed", error?.message ?? "Failed to create execution.")
+    void reportApiMutationFailureAlert({
+      code: "execution_create_failed",
+      operation: "create",
+      resource: "execution",
+      status: 500,
+    })
+
+    return getDataErrorResponse(
+      "execution_create_failed",
+      error?.message ?? "Failed to create execution."
+    )
   }
 
   return jsonSuccess(data, {
