@@ -64,8 +64,7 @@ export function getWagmiConfig() {
     try {
       globalThis.__kdexitWalletConfigError = null
       globalThis.__kdexitWagmiConfig = createWalletConfig()
-    } catch (error) {
-      console.error("Failed to initialize wallet configuration:", error)
+    } catch {
       globalThis.__kdexitWalletConfigError =
         "Wallet configuration could not be initialized. Wallet connection is disabled for now."
       globalThis.__kdexitWagmiConfig = createDisabledWalletConfig()

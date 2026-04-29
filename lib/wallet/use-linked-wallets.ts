@@ -41,12 +41,11 @@ export function useLinkedWallets() {
 
         setLinkedWallets(sortLinkedWallets(wallets))
         setLinkedWalletsError(null)
-      } catch (error) {
+      } catch {
         if (!isMounted) {
           return
         }
 
-        console.error("Failed to load linked wallets:", error)
         setLinkedWalletsError("We could not load linked wallets right now.")
       } finally {
         if (isMounted) {

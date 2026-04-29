@@ -153,8 +153,7 @@ export async function listDashboardStrategies() {
     }
 
     return result.data.map(toDashboardStrategy)
-  } catch (error) {
-    console.error("Failed to load strategies:", error)
+  } catch {
     return []
   }
 }
@@ -168,8 +167,7 @@ export async function listDashboardExecutions() {
     }
 
     return result.data.map(toDashboardExecution)
-  } catch (error) {
-    console.error("Failed to load executions:", error)
+  } catch {
     return []
   }
 }
@@ -183,8 +181,7 @@ export async function listDashboardExecutionAttempts() {
     }
 
     return result.data.map(toDashboardExecutionAttempt)
-  } catch (error) {
-    console.error("Failed to load execution attempts:", error)
+  } catch {
     return []
   }
 }

@@ -54,6 +54,8 @@ Optional monitoring readiness variables:
 - `KDEXIT_MONITORING_ENABLED`
 - `KDEXIT_MONITORING_ENVIRONMENT`
 - `KDEXIT_RELEASE`
+- `NEXT_PUBLIC_KDEXIT_ALERTS_ENABLED`
+- `KDEXIT_ALERTS_ENABLED`
 
 Phase 5 execution-readiness flags:
 
@@ -85,6 +87,8 @@ classification and local/staging/production value guidance, see
 [Production Environment Checklist](docs/production-environment-checklist.md).
 For beta release operations, see
 [Beta Deployment Readiness Checklist](docs/beta-deployment-readiness-checklist.md).
+For beta incident handling, see
+[Beta Incident Response](docs/beta-incident-response.md).
 
 Execution-readiness safe defaults:
 

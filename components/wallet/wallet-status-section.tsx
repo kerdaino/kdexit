@@ -92,7 +92,6 @@ export default function WalletStatusSection() {
         tone: "success",
       })
     } catch (error) {
-      console.error("Failed to link wallet:", error)
       void reportWalletLinkingErrorAlert({
         code: "client_wallet_link_create_failed",
         operation: "create",
@@ -120,7 +119,6 @@ export default function WalletStatusSection() {
         tone: "success",
       })
     } catch (error) {
-      console.error("Failed to update primary wallet:", error)
       void reportWalletLinkingErrorAlert({
         code: "client_wallet_link_update_failed",
         operation: "update",
@@ -147,7 +145,6 @@ export default function WalletStatusSection() {
         tone: "success",
       })
     } catch (error) {
-      console.error("Failed to unlink wallet:", error)
       void reportWalletLinkingErrorAlert({
         code: "client_wallet_link_delete_failed",
         operation: "delete",

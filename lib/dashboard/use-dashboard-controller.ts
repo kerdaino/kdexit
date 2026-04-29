@@ -193,8 +193,7 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
 
       setExecutions((prev) => [savedExecution, ...prev])
       return savedExecution
-    } catch (error) {
-      console.error("Failed to create execution:", error)
+    } catch {
     }
 
     return null
@@ -231,8 +230,7 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
       })
       setFeedback({ message: "Strategy created successfully.", tone: "success" })
       return true
-    } catch (error) {
-      console.error("Failed to create strategy:", error)
+    } catch {
       setFeedback({ message: "Failed to create strategy.", tone: "error" })
       return false
     }
@@ -267,9 +265,8 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
       setEditingStrategy(null)
       setFeedback({ message: "Strategy updated successfully.", tone: "success" })
       return true
-    } catch (error) {
+    } catch {
       setStrategies(previousStrategies)
-      console.error("Failed to update strategy:", error)
       setFeedback({ message: "Failed to update strategy.", tone: "error" })
       return false
     }
@@ -305,9 +302,8 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
           status: "success",
         })
         setFeedback({ message: "Strategy paused successfully.", tone: "success" })
-      } catch (error) {
+      } catch {
         setStrategies(previousStrategies)
-        console.error("Failed to pause strategy:", error)
         setFeedback({ message: "Failed to pause strategy.", tone: "error" })
       } finally {
         setPendingStrategyAction(id)
@@ -355,9 +351,8 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
           status: "success",
         })
         setFeedback({ message: "Strategy resumed successfully.", tone: "success" })
-      } catch (error) {
+      } catch {
         setStrategies(previousStrategies)
-        console.error("Failed to resume strategy:", error)
         setFeedback({ message: "Failed to resume strategy.", tone: "error" })
       } finally {
         setPendingStrategyAction(id)
@@ -384,9 +379,8 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
         })
         setFeedback({ message: "Strategy deleted successfully.", tone: "success" })
         return true
-      } catch (error) {
+      } catch {
         setStrategies(previousStrategies)
-        console.error("Failed to delete strategy:", error)
         setFeedback({ message: "Failed to delete strategy.", tone: "error" })
         return false
       } finally {
