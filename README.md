@@ -66,6 +66,13 @@ Phase 5 execution-readiness flags:
 - `KDEXIT_ENABLE_WATCHER_SIMULATION`
 - `KDEXIT_LIVE_EXECUTION_KILL_SWITCH`
 
+Internal execution-worker scaffold flags:
+
+- `KDEXIT_EXECUTION_WORKER_DRY_RUN_ENABLED`
+- `KDEXIT_EXECUTION_WORKER_CONTRACT_WRITE_MODE`
+- `KDEXIT_EXECUTION_WORKER_LIVE_EXECUTION_MODE`
+- `KDEXIT_EXECUTION_WORKER_MAX_STRATEGIES_PER_RUN`
+
 Optional contract-readiness references:
 
 - `NEXT_PUBLIC_KDEXIT_CONTRACT_SUPPORTED_CHAIN_IDS`
@@ -100,6 +107,8 @@ Execution-readiness safe defaults:
 - the global live execution kill switch defaults to enabled
 
 Contract readiness can report configured chain IDs, contract addresses, and ABI references for future use. These flags and references do not add or enable trade execution, token approvals, swaps, or contract writes. They are only a centralized readiness and gating layer for future Phase 5 work, and live contract execution remains disabled.
+
+The internal execution-worker scaffold is dry-run only and disabled by default. It can prepare future execution payload hashes for internal review, but it does not load private keys, request approvals, submit transactions, call `writeContract`, call `sendTransaction`, route swaps, or move funds.
 
 ## Learn More
 

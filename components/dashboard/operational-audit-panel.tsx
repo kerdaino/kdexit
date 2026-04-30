@@ -62,11 +62,14 @@ export default function OperationalAuditPanel({
     })),
     ...executionAttempts.map((attempt): AuditEvent => ({
       id: `simulation-${attempt.id}`,
-      category: "Watcher",
-      title: "Simulation Attempt",
+      category: attempt.executionMode === "dry_run" ? "Worker" : "Watcher",
+      title:
+        attempt.executionMode === "dry_run"
+          ? "Execution Worker Dry Run"
+          : "Simulation Attempt",
       detail: `${formatTriggerLabel(attempt.triggerType)} - ${formatExecutionAttemptStatus(
         attempt.currentStatus
-      )}`,
+      )}${attempt.blockedReason ? ` - ${attempt.blockedReason}` : ""}`,
       timestamp: attempt.updatedAt,
       status: attempt.currentStatus,
     })),
@@ -128,7 +131,7 @@ export default function OperationalAuditPanel({
         <AuditMetric
           label="Watcher Attempts"
           value={executionAttempts.length.toString()}
-          detail="Dry-run simulation attempts only."
+          detail="Dry-run simulation and internal worker attempts only."
         />
         <AuditMetric
           label="Linked Wallets"
@@ -352,9 +355,8 @@ export default function OperationalAuditPanel({
                       </p>
                       <p className="mt-1 text-sm leading-6 text-gray-400">
                         {strategy.evaluationState ?? "idle"} -{" "}
-                        {strategy.simulationMode === false
-                          ? "live mode metadata"
-                          : "simulation mode"}
+                        {strategy.executionMode ?? "simulation mode"} -{" "}
+                        {strategy.authorizationStatus ?? "authorization missing"}
                       </p>
                     </div>
                     <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.16em] text-gray-300">

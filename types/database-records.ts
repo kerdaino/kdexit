@@ -15,10 +15,31 @@ export type DbExecutionAttemptStatus =
   | "queued"
   | "evaluating"
   | "simulated"
+  | "pending"
   | "submitted"
   | "confirmed"
   | "failed"
+  | "blocked"
   | "aborted"
+
+export type DbStrategyAuthorizationStatus =
+  | "missing"
+  | "linked_wallet_required"
+  | "signature_required"
+  | "pending"
+  | "authorized"
+  | "expired"
+  | "revoked"
+
+export type DbExecutionMode = "simulation" | "dry_run" | "live_disabled"
+
+export type DbReconciliationStatus =
+  | "not_started"
+  | "not_required"
+  | "pending"
+  | "confirmed"
+  | "failed"
+  | "mismatch"
 
 export interface WalletLinkRecord {
   id: string
@@ -74,6 +95,9 @@ export interface StrategyRecord {
   last_evaluated_at: string | null
   next_evaluation_at: string | null
   simulation_mode: boolean
+  authorization_status: DbStrategyAuthorizationStatus
+  authorization_reference: string | null
+  execution_mode: DbExecutionMode
   created_at: string
   updated_at: string
 }
@@ -97,6 +121,9 @@ export interface StrategyInsert {
   last_evaluated_at?: string | null
   next_evaluation_at?: string | null
   simulation_mode?: boolean
+  authorization_status?: DbStrategyAuthorizationStatus
+  authorization_reference?: string | null
+  execution_mode?: DbExecutionMode
   created_at?: string
   updated_at?: string
 }
@@ -119,6 +146,9 @@ export interface StrategyUpdate {
   last_evaluated_at?: string | null
   next_evaluation_at?: string | null
   simulation_mode?: boolean
+  authorization_status?: DbStrategyAuthorizationStatus
+  authorization_reference?: string | null
+  execution_mode?: DbExecutionMode
   created_at?: string
   updated_at?: string
 }
@@ -134,6 +164,11 @@ export interface ExecutionAttemptRecord {
   retry_count: number
   failure_reason: string | null
   transaction_hash: string | null
+  execution_mode: DbExecutionMode
+  prepared_payload_hash: string | null
+  blocked_reason: string | null
+  reconciliation_status: DbReconciliationStatus
+  reconciliation_detail: string | null
   created_at: string
   updated_at: string
 }
@@ -149,6 +184,11 @@ export interface ExecutionAttemptInsert {
   retry_count?: number
   failure_reason?: string | null
   transaction_hash?: string | null
+  execution_mode?: DbExecutionMode
+  prepared_payload_hash?: string | null
+  blocked_reason?: string | null
+  reconciliation_status?: DbReconciliationStatus
+  reconciliation_detail?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -163,6 +203,11 @@ export interface ExecutionAttemptUpdate {
   retry_count?: number
   failure_reason?: string | null
   transaction_hash?: string | null
+  execution_mode?: DbExecutionMode
+  prepared_payload_hash?: string | null
+  blocked_reason?: string | null
+  reconciliation_status?: DbReconciliationStatus
+  reconciliation_detail?: string | null
   created_at?: string
   updated_at?: string
 }

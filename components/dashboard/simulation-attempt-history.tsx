@@ -18,8 +18,8 @@ export default function SimulationAttemptHistory({
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
       <SectionHeading
-        title="Watcher Simulation Attempts"
-        description="Dry-run watcher evaluations and simulated attempt outcomes. These records never move funds or call onchain contracts."
+        title="Watcher And Worker Attempts"
+        description="Dry-run watcher evaluations, blocked worker checks, and simulated attempt outcomes. These records never move funds or call onchain contracts."
       />
 
       <div className="mt-6 space-y-4">
@@ -29,12 +29,12 @@ export default function SimulationAttemptHistory({
               S
             </div>
             <p className="mt-4 text-base font-semibold text-white">
-              No watcher simulation attempts yet
+              No watcher or worker attempts yet
             </p>
             <p className="mt-2 max-w-md text-sm leading-6 text-gray-400">
-              Once the Phase 3 watcher simulation runs, dry-run take-profit and
-              stop-loss attempts will appear here with clear success, pending,
-              or failure states.
+              Once the watcher simulation or internal execution-worker dry run
+              runs, take-profit and stop-loss attempts will appear here with clear
+              simulated, blocked, pending, or failure states.
             </p>
             <p className="mt-4 text-xs uppercase tracking-[0.18em] text-gray-500">
               Simulation only. No wallet execution is performed.
@@ -55,7 +55,9 @@ export default function SimulationAttemptHistory({
                     {formatTriggerLabel(attempt.triggerType)} • Attempt #{attempt.attemptNumber}
                   </p>
                   <p className="text-sm leading-6 text-gray-500">
-                    Watcher simulation run
+                    {attempt.executionMode === "dry_run"
+                      ? "Internal execution worker dry run"
+                      : "Watcher simulation run"}
                   </p>
                 </div>
 
@@ -95,10 +97,41 @@ export default function SimulationAttemptHistory({
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:col-span-1">
                   <p className="text-xs uppercase tracking-[0.18em] text-gray-500">
-                    Last Failure
+                    Blocked Or Failure Reason
                   </p>
                   <p className="mt-2 text-sm leading-6 text-white">
-                    {attempt.lastFailureReason ?? "No failure recorded"}
+                    {attempt.blockedReason ??
+                      attempt.lastFailureReason ??
+                      "No blocked or failure reason recorded"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">
+                    Execution Mode
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-white">
+                    {attempt.executionMode ?? "simulation"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">
+                    Payload Hash
+                  </p>
+                  <p className="mt-2 break-all text-sm leading-6 text-white">
+                    {attempt.preparedPayloadHash ?? "No payload prepared"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">
+                    Reconciliation
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-white">
+                    {attempt.reconciliationStatus ?? "not_started"}
                   </p>
                 </div>
               </div>

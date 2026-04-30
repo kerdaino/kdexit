@@ -1,4 +1,5 @@
 import { jsonError } from "@/lib/api/http"
+import { getExecutionWorkerConfig } from "@/lib/execution-worker/config"
 import { isWatcherSimulationModeEnabled } from "@/lib/config/execution-readiness"
 import { requireRouteUser } from "@/lib/api/route-auth"
 
@@ -69,6 +70,58 @@ export async function requireInternalWatcherSimulationAccess() {
       response: jsonError(
         "forbidden",
         "You are not allowed to use the internal watcher simulation route.",
+        { status: 403 }
+      ),
+    }
+  }
+
+  return auth
+}
+
+export async function requireInternalExecutionWorkerDryRunAccess() {
+  if (process.env.NODE_ENV === "production") {
+    return {
+      ok: false as const,
+      response: jsonError("not_found", "Not found.", { status: 404 }),
+    }
+  }
+
+  const workerConfig = getExecutionWorkerConfig()
+
+  if (!workerConfig.dryRunEnabled) {
+    return {
+      ok: false as const,
+      response: jsonError(
+        "execution_worker_dry_run_disabled",
+        "Internal execution worker dry-run mode is disabled in this environment.",
+        { status: 403 }
+      ),
+    }
+  }
+
+  if (workerConfig.contractWriteMode || workerConfig.liveExecutionMode) {
+    return {
+      ok: false as const,
+      response: jsonError(
+        "execution_worker_unsafe_mode_requested",
+        "Execution worker dry-run route refuses live or contract-write modes.",
+        { status: 403 }
+      ),
+    }
+  }
+
+  const auth = await requireRouteUser()
+
+  if (!auth.ok) {
+    return auth
+  }
+
+  if (!isUserAllowlisted(auth.user)) {
+    return {
+      ok: false as const,
+      response: jsonError(
+        "forbidden",
+        "You are not allowed to use the internal execution worker dry-run route.",
         { status: 403 }
       ),
     }

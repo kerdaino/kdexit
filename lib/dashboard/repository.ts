@@ -47,6 +47,9 @@ export function toDashboardStrategy(record: StrategyRecord): Strategy {
     lastEvaluatedAt: record.last_evaluated_at ?? undefined,
     nextEvaluationAt: record.next_evaluation_at ?? undefined,
     simulationMode: record.simulation_mode,
+    authorizationStatus: record.authorization_status ?? "missing",
+    authorizationReference: record.authorization_reference ?? undefined,
+    executionMode: record.execution_mode ?? "simulation",
     createdAt: record.created_at,
   }
 }

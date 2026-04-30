@@ -107,8 +107,10 @@ export function getExecutionAttemptOutcome(
     case "queued":
     case "evaluating":
     case "submitted":
+    case "pending":
       return "pending"
     case "failed":
+    case "blocked":
     case "aborted":
       return "failed"
     default:
@@ -137,12 +139,16 @@ export function formatExecutionAttemptStatus(status: ExecutionAttempt["status"])
       return "Evaluating"
     case "simulated":
       return "Simulated Success"
+    case "pending":
+      return "Pending Dry Run"
     case "submitted":
       return "Submitted"
     case "confirmed":
       return "Confirmed"
     case "failed":
       return "Failed"
+    case "blocked":
+      return "Blocked"
     case "aborted":
       return "Aborted"
     default:

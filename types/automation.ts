@@ -27,6 +27,11 @@ export type ExecutionAttempt = {
   failureReason?: string
   lastFailureReason?: string
   transactionHash?: string
+  executionMode: ExecutionAttemptRecord["execution_mode"]
+  preparedPayloadHash?: string
+  blockedReason?: string
+  reconciliationStatus: ExecutionAttemptRecord["reconciliation_status"]
+  reconciliationDetail?: string
   createdAt: string
   updatedAt: string
 }
@@ -44,6 +49,11 @@ export function toExecutionAttempt(record: ExecutionAttemptRecord): ExecutionAtt
     failureReason: record.failure_reason ?? undefined,
     lastFailureReason: record.failure_reason ?? undefined,
     transactionHash: record.transaction_hash ?? undefined,
+    executionMode: record.execution_mode ?? "simulation",
+    preparedPayloadHash: record.prepared_payload_hash ?? undefined,
+    blockedReason: record.blocked_reason ?? undefined,
+    reconciliationStatus: record.reconciliation_status ?? "not_started",
+    reconciliationDetail: record.reconciliation_detail ?? undefined,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   }

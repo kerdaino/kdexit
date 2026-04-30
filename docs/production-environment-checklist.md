@@ -69,6 +69,10 @@ and validation. They must not be treated as permission to execute transactions.
 | `KDEXIT_ALERTS_ENABLED` | Enables server alerting boundary. | Keep `false` until an alert transport is registered. | Usually `false`; staging can verify no-op behavior. |
 | `KDEXIT_INTERNAL_ADMIN_USER_IDS` | Comma-separated allowlist for internal watcher simulation outside development. | Leave unset in production because the internal route returns 404 in production. | Use staging Supabase user IDs only. |
 | `KDEXIT_INTERNAL_ADMIN_EMAILS` | Comma-separated email allowlist for internal watcher simulation outside development. | Leave unset in production because the internal route returns 404 in production. | Use staging admin emails only. |
+| `KDEXIT_EXECUTION_WORKER_DRY_RUN_ENABLED` | Enables the internal execution-worker dry-run route. | `false`; the internal route returns 404 in production. | `true` only for restricted internal dry-run testing. |
+| `KDEXIT_EXECUTION_WORKER_CONTRACT_WRITE_MODE` | Future worker contract-write gate. | `false`. Do not enable in this scaffold. | `false`. |
+| `KDEXIT_EXECUTION_WORKER_LIVE_EXECUTION_MODE` | Future worker live-execution gate. | `false`. Do not enable in this scaffold. | `false`. |
+| `KDEXIT_EXECUTION_WORKER_MAX_STRATEGIES_PER_RUN` | Dry-run worker selection limit. | Optional; keep small if ever tested outside production. | Optional; defaults to `25`. |
 
 ## Values That Must Differ By Environment
 
@@ -97,5 +101,7 @@ and validation. They must not be treated as permission to execute transactions.
 - Confirm watcher simulation is not enabled in production.
 - Confirm alerting and monitoring are either disabled or have registered
   transports with sanitized context.
+- Confirm the execution-worker dry-run route is disabled in production and no
+  private key, relayer, contract-write, or live worker env vars are configured.
 - Confirm `.env.example` remains placeholder-only and contains no real project
   values.

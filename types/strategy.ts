@@ -4,9 +4,11 @@ export type ExecutionAttemptStatus =
   | "queued"
   | "evaluating"
   | "simulated"
+  | "pending"
   | "submitted"
   | "confirmed"
   | "failed"
+  | "blocked"
   | "aborted"
 
 export type TriggerType =
@@ -36,6 +38,9 @@ export type Strategy = {
   lastEvaluatedAt?: string
   nextEvaluationAt?: string
   simulationMode?: boolean
+  authorizationStatus?: string
+  authorizationReference?: string
+  executionMode?: string
   createdAt: string
 }
 
@@ -58,6 +63,11 @@ export type ExecutionAttempt = {
   retryCount: number
   failureReason?: string
   transactionHash?: string
+  executionMode?: string
+  preparedPayloadHash?: string
+  blockedReason?: string
+  reconciliationStatus?: string
+  reconciliationDetail?: string
   createdAt: string
   updatedAt: string
 }
