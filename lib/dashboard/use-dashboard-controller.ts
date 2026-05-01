@@ -403,6 +403,13 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
     setShowForm(true)
   }
 
+  function handleAuthorizationUpdated(strategy: Strategy) {
+    setStrategies((prev) =>
+      prev.map((entry) => (entry.id === strategy.id ? strategy : entry))
+    )
+    setFeedback({ message: "Execution authorization updated.", tone: "success" })
+  }
+
   function handleCloseForm() {
     setShowForm(false)
     setEditingStrategy(null)
@@ -421,6 +428,7 @@ export function useDashboardController(phase5Gates: Phase5ExecutionUiGates) {
     handleCloseForm,
     handleDeleteStrategy,
     handleEditStrategy,
+    handleAuthorizationUpdated,
     handleOpenNewStrategy,
     handlePauseStrategy,
     handleResumeStrategy,

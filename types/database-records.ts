@@ -26,9 +26,11 @@ export type DbStrategyAuthorizationStatus =
   | "missing"
   | "linked_wallet_required"
   | "signature_required"
+  | "signed"
   | "pending"
   | "authorized"
   | "expired"
+  | "cancelled"
   | "revoked"
 
 export type DbExecutionMode = "simulation" | "dry_run" | "live_disabled"
@@ -97,6 +99,15 @@ export interface StrategyRecord {
   simulation_mode: boolean
   authorization_status: DbStrategyAuthorizationStatus
   authorization_reference: string | null
+  authorization_signature: string | null
+  authorization_digest: string | null
+  authorization_nonce: string | null
+  authorization_deadline: string | null
+  authorization_adapter: string | null
+  authorization_max_amount: string | null
+  authorization_wallet_address: string | null
+  authorization_signed_at: string | null
+  authorization_cancelled_at: string | null
   execution_mode: DbExecutionMode
   created_at: string
   updated_at: string
@@ -123,6 +134,15 @@ export interface StrategyInsert {
   simulation_mode?: boolean
   authorization_status?: DbStrategyAuthorizationStatus
   authorization_reference?: string | null
+  authorization_signature?: string | null
+  authorization_digest?: string | null
+  authorization_nonce?: string | null
+  authorization_deadline?: string | null
+  authorization_adapter?: string | null
+  authorization_max_amount?: string | null
+  authorization_wallet_address?: string | null
+  authorization_signed_at?: string | null
+  authorization_cancelled_at?: string | null
   execution_mode?: DbExecutionMode
   created_at?: string
   updated_at?: string
@@ -148,6 +168,15 @@ export interface StrategyUpdate {
   simulation_mode?: boolean
   authorization_status?: DbStrategyAuthorizationStatus
   authorization_reference?: string | null
+  authorization_signature?: string | null
+  authorization_digest?: string | null
+  authorization_nonce?: string | null
+  authorization_deadline?: string | null
+  authorization_adapter?: string | null
+  authorization_max_amount?: string | null
+  authorization_wallet_address?: string | null
+  authorization_signed_at?: string | null
+  authorization_cancelled_at?: string | null
   execution_mode?: DbExecutionMode
   created_at?: string
   updated_at?: string

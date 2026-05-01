@@ -13,6 +13,7 @@ type StrategyManagementPanelProps = {
   onCloseForm: () => void
   onDeleteStrategy: (id: string) => Promise<boolean>
   onEditStrategy: (strategy: Strategy) => void
+  onAuthorizationUpdated: (strategy: Strategy) => void
   onOpenNewStrategy: () => void
   onPauseStrategy: (id: string) => Promise<void>
   onResumeStrategy: (id: string) => Promise<void>
@@ -29,6 +30,7 @@ export default function StrategyManagementPanel({
   onCloseForm,
   onDeleteStrategy,
   onEditStrategy,
+  onAuthorizationUpdated,
   onOpenNewStrategy,
   onPauseStrategy,
   onResumeStrategy,
@@ -89,6 +91,7 @@ export default function StrategyManagementPanel({
           onResumeStrategy={onResumeStrategy}
           onDeleteStrategy={onDeleteStrategy}
           onEditStrategy={onEditStrategy}
+          onAuthorizationUpdated={onAuthorizationUpdated}
           phase5Gates={phase5Gates}
         />
       </div>

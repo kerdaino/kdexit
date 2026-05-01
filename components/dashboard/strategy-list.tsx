@@ -1,9 +1,20 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useSignTypedData } from "wagmi"
 import type { Strategy } from "@/types/strategy"
 import type { Phase5ExecutionUiGates } from "@/types/phase5-gates"
+import type { WalletLinkRecord } from "@/types/database-records"
 import { getStrategyStatusClass } from "@/lib/dashboard/utils"
+import { storeDashboardExecutionAuthorization, cancelDashboardExecutionAuthorization } from "@/lib/dashboard/mutation-gateway"
+import {
+  buildExecutionAuthorizationTypedData,
+  createExecutionAuthorizationNonce,
+  getExecutionAuthorizationDeadline,
+  hashExecutionAuthorization,
+} from "@/lib/execution-authorization/typed-data"
+import { useLinkedWallets } from "@/lib/wallet/use-linked-wallets"
+import { formatWalletAddress, useWalletConnection } from "@/lib/web3/use-wallet-connection"
 import SectionHeading from "@/components/shared/section-heading"
 
 type StrategyListProps = {
@@ -14,6 +25,7 @@ type StrategyListProps = {
   onResumeStrategy: (id: string) => Promise<void>
   onDeleteStrategy: (id: string) => Promise<boolean>
   onEditStrategy: (strategy: Strategy) => void
+  onAuthorizationUpdated: (strategy: Strategy) => void
 }
 
 type FilterStatus = "all" | "active" | "paused"
@@ -26,6 +38,45 @@ function formatTokenAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
+function formatAuthorizationStatus(strategy: Strategy) {
+  if (
+    strategy.authorizationDeadline &&
+    strategy.authorizationStatus === "signed" &&
+    Number(strategy.authorizationDeadline) <= Math.floor(Date.now() / 1000)
+  ) {
+    return "authorization expired"
+  }
+
+  switch (strategy.authorizationStatus) {
+    case "signed":
+      return "authorization signed"
+    case "cancelled":
+    case "revoked":
+      return "authorization cancelled"
+    case "expired":
+      return "authorization expired"
+    default:
+      return "not authorized"
+  }
+}
+
+function formatUnixSeconds(value?: string) {
+  const timestamp = Number(value)
+
+  if (!value || !Number.isFinite(timestamp)) {
+    return "Not set"
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(timestamp * 1000))
+}
+
+function isPositiveUintString(value: string) {
+  return /^(0|[1-9][0-9]*)$/.test(value) && BigInt(value) > BigInt(0)
+}
+
 export default function StrategyList({
   strategies,
   pendingStrategyActionById = {},
@@ -33,10 +84,13 @@ export default function StrategyList({
   onResumeStrategy,
   onDeleteStrategy,
   onEditStrategy,
+  onAuthorizationUpdated,
   phase5Gates,
 }: StrategyListProps) {
   const [filter, setFilter] = useState<FilterStatus>("all")
   const [strategyToDelete, setStrategyToDelete] = useState<Strategy | null>(null)
+  const walletConnection = useWalletConnection()
+  const { linkedWallets } = useLinkedWallets()
 
   const filteredStrategies = useMemo(() => {
     if (filter === "all") return strategies
@@ -195,6 +249,13 @@ export default function StrategyList({
                   </span>
                 </div>
 
+                <ExecutionAuthorizationCard
+                  linkedWallets={linkedWallets}
+                  onAuthorizationUpdated={onAuthorizationUpdated}
+                  strategy={strategy}
+                  walletConnection={walletConnection}
+                />
+
                 <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
                   <button
                     onClick={() => onEditStrategy(strategy)}
@@ -251,6 +312,193 @@ export default function StrategyList({
             </div>
           ))
         )}
+      </div>
+    </div>
+  )
+}
+
+type WalletConnection = ReturnType<typeof useWalletConnection>
+
+function ExecutionAuthorizationCard({
+  linkedWallets,
+  onAuthorizationUpdated,
+  strategy,
+  walletConnection,
+}: {
+  linkedWallets: WalletLinkRecord[]
+  onAuthorizationUpdated: (strategy: Strategy) => void
+  strategy: Strategy
+  walletConnection: WalletConnection
+}) {
+  const { signTypedDataAsync, isPending } = useSignTypedData()
+  const [adapter, setAdapter] = useState(
+    process.env.NEXT_PUBLIC_KDEXIT_EXECUTION_CONTROLLER_ADDRESS ?? ""
+  )
+  const [maxAmount, setMaxAmount] = useState("")
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const connectedAddress = walletConnection.address?.toLowerCase()
+  const linkedWallet = linkedWallets.find(
+    (wallet) =>
+      wallet.chain_id === strategy.chainId &&
+      wallet.wallet_address.toLowerCase() === connectedAddress
+  )
+  const canRequestSignature =
+    walletConnection.isConnected &&
+    Boolean(strategy.tokenAddress) &&
+    Boolean(linkedWallet) &&
+    /^0x[a-fA-F0-9]{40}$/.test(adapter) &&
+    isPositiveUintString(maxAmount)
+
+  async function handleSignAuthorization() {
+    if (!walletConnection.address || !canRequestSignature) {
+      setFeedback("Connect and link the strategy wallet, then enter adapter and max amount.")
+      return
+    }
+
+    try {
+      setFeedback(null)
+      const deadline = getExecutionAuthorizationDeadline(
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      )
+      const nonce = createExecutionAuthorizationNonce().toString()
+      const authorization = {
+        adapter,
+        chainId: strategy.chainId,
+        deadline,
+        maxAmount,
+        nonce,
+        sellPercentage: strategy.sellPercentage,
+        strategyId: strategy.id,
+        tokenAddress: strategy.tokenAddress,
+        walletAddress: walletConnection.address,
+      }
+      const typedData = buildExecutionAuthorizationTypedData(authorization)
+      const digest = hashExecutionAuthorization(authorization)
+      const signature = await signTypedDataAsync(
+        typedData as unknown as Parameters<typeof signTypedDataAsync>[0]
+      )
+      const updatedStrategy = await storeDashboardExecutionAuthorization(strategy.id, {
+        adapter,
+        deadline,
+        digest,
+        maxAmount,
+        nonce,
+        signature,
+        walletAddress: walletConnection.address,
+      })
+
+      onAuthorizationUpdated(updatedStrategy)
+      setFeedback("Authorization signature stored. No transaction or approval was sent.")
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Authorization signing failed.")
+    }
+  }
+
+  async function handleCancelAuthorization() {
+    try {
+      setIsCancelling(true)
+      setFeedback(null)
+      const updatedStrategy = await cancelDashboardExecutionAuthorization(strategy.id)
+
+      onAuthorizationUpdated(updatedStrategy)
+      setFeedback("Stored authorization cancelled in the app. No onchain transaction was sent.")
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Cancellation failed.")
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-gray-500">
+            Execution authorization
+          </p>
+          <h4 className="mt-2 text-sm font-semibold text-white">
+            {formatAuthorizationStatus(strategy)}
+          </h4>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+            Wallet linking proves account ownership. This signature is separate typed
+            data consent for a bounded future execution path, and it is not a token
+            approval or a transaction.
+          </p>
+        </div>
+        <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-gray-300">
+          Wallet {formatWalletAddress(walletConnection.address)}
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 text-sm text-gray-300 sm:grid-cols-2">
+        <div>Token: {formatTokenAddress(strategy.tokenAddress)}</div>
+        <div>Chain ID: {strategy.chainId}</div>
+        <div>Sell bps: {Math.round(strategy.sellPercentage * 100)}</div>
+        <div>Max amount: {(strategy.authorizationMaxAmount ?? maxAmount) || "Not set"}</div>
+        <div>Adapter: {formatTokenAddress(strategy.authorizationAdapter ?? adapter)}</div>
+        <div>Expiry: {formatUnixSeconds(strategy.authorizationDeadline)}</div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="text-sm text-gray-300">
+          <span className="mb-2 block text-xs uppercase tracking-[0.16em] text-gray-500">
+            Adapter
+          </span>
+          <input
+            value={adapter}
+            onChange={(event) => setAdapter(event.target.value)}
+            placeholder="0x..."
+            className="min-h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3 text-white outline-none focus:border-emerald-500/60"
+          />
+        </label>
+        <label className="text-sm text-gray-300">
+          <span className="mb-2 block text-xs uppercase tracking-[0.16em] text-gray-500">
+            Max amount
+          </span>
+          <input
+            value={maxAmount}
+            onChange={(event) => setMaxAmount(event.target.value)}
+            inputMode="numeric"
+            placeholder="Raw base units"
+            className="min-h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3 text-white outline-none focus:border-emerald-500/60"
+          />
+        </label>
+      </div>
+
+      {!linkedWallet ? (
+        <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+          The connected wallet must be linked for chain {strategy.chainId} before
+          authorization can be signed.
+        </p>
+      ) : null}
+
+      {feedback ? (
+        <p className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-gray-300">
+          {feedback}
+        </p>
+      ) : null}
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          onClick={() => void handleSignAuthorization()}
+          disabled={!canRequestSignature || isPending}
+          className="min-h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isPending ? "Signing..." : "Sign Typed Data"}
+        </button>
+        <button
+          onClick={() => void handleCancelAuthorization()}
+          disabled={
+            isCancelling ||
+            !["signed", "pending", "authorized"].includes(
+              strategy.authorizationStatus ?? "missing"
+            )
+          }
+          className="min-h-11 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isCancelling ? "Cancelling..." : "Cancel Stored Authorization"}
+        </button>
       </div>
     </div>
   )

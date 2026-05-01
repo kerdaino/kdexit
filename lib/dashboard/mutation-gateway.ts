@@ -1,12 +1,15 @@
 import { getStrategyExecutionDataMode } from "@/lib/data"
 import {
   listExecutionAttemptsFromApi,
+  cancelExecutionAuthorizationFromApi,
   createExecutionFromApi,
   createStrategyFromApi,
   deleteStrategyFromApi,
   listExecutionsFromApi,
   listStrategiesFromApi,
+  storeExecutionAuthorizationFromApi,
   updateStrategyFromApi,
+  type ExecutionAuthorizationApiInput,
 } from "@/lib/dashboard/api-client"
 import {
   createDashboardExecution as createDashboardExecutionFromRepository,
@@ -176,6 +179,17 @@ export async function resumeDashboardStrategy(id: string) {
     case "client-repository":
       return resumeDashboardStrategyFromRepository(id)
   }
+}
+
+export async function storeDashboardExecutionAuthorization(
+  strategyId: string,
+  input: ExecutionAuthorizationApiInput
+) {
+  return storeExecutionAuthorizationFromApi(strategyId, input).then(toDashboardStrategy)
+}
+
+export async function cancelDashboardExecutionAuthorization(strategyId: string) {
+  return cancelExecutionAuthorizationFromApi(strategyId).then(toDashboardStrategy)
 }
 
 export async function createDashboardExecution(input: DashboardExecutionInput) {

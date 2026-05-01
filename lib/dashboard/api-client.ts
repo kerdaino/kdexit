@@ -107,6 +107,41 @@ export async function updateStrategyFromApi(id: string, updates: StrategyUpdate)
   return parseApiResponse<StrategyRecord>(response)
 }
 
+export type ExecutionAuthorizationApiInput = {
+  adapter: string
+  deadline: string
+  digest: string
+  maxAmount: string
+  nonce: string
+  signature: string
+  walletAddress: string
+}
+
+export async function storeExecutionAuthorizationFromApi(
+  strategyId: string,
+  input: ExecutionAuthorizationApiInput
+) {
+  const response = await fetch(`/api/strategies/${strategyId}/authorization`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  })
+
+  return parseApiResponse<StrategyRecord>(response)
+}
+
+export async function cancelExecutionAuthorizationFromApi(strategyId: string) {
+  const response = await fetch(`/api/strategies/${strategyId}/authorization`, {
+    method: "DELETE",
+    credentials: "same-origin",
+  })
+
+  return parseApiResponse<StrategyRecord>(response)
+}
+
 export async function deleteStrategyFromApi(id: string) {
   const response = await fetch(`/api/strategies/${id}`, {
     method: "DELETE",

@@ -40,6 +40,15 @@ export type Strategy = {
   simulationMode?: boolean
   authorizationStatus?: string
   authorizationReference?: string
+  authorizationSignature?: string
+  authorizationDigest?: string
+  authorizationNonce?: string
+  authorizationDeadline?: string
+  authorizationAdapter?: string
+  authorizationMaxAmount?: string
+  authorizationWalletAddress?: string
+  authorizationSignedAt?: string
+  authorizationCancelledAt?: string
   executionMode?: string
   createdAt: string
 }

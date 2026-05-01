@@ -41,6 +41,7 @@ export default function DashboardPageClient({
     handleCloseForm,
     handleDeleteStrategy,
     handleEditStrategy,
+    handleAuthorizationUpdated,
     handleOpenNewStrategy,
     handlePauseStrategy,
     handleResumeStrategy,
@@ -142,6 +143,7 @@ export default function DashboardPageClient({
               onCloseForm={handleCloseForm}
               onDeleteStrategy={handleDeleteStrategy}
               onEditStrategy={handleEditStrategy}
+              onAuthorizationUpdated={handleAuthorizationUpdated}
               onOpenNewStrategy={handleOpenNewStrategy}
               onPauseStrategy={handlePauseStrategy}
               onResumeStrategy={handleResumeStrategy}
